@@ -1,0 +1,20 @@
+{
+  "name": "@retail-pos/desktop",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Electron shell: launches the bundled server and hosts the POS UI",
+  "main": "dist/main.js",
+  "scripts": {
+    "build:ts": "tsc -p tsconfig.json",
+    "dev": "npm run build:ts && node scripts/run-electron.cjs --dev",
+    "smoke": "npm run build:ts && node scripts/run-electron.cjs --smoke",
+    "build": "npm run build:ts && electron-builder --win --x64",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "26.6.6",
+    "electron": "45.3.4",
+    "electron-builder": "26.18.0",
+    "typescript": "7.0.2"
+  }
+}

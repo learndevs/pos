@@ -1,0 +1,6 @@
+# Copy to config/application-local.properties (git-ignored) and fill in. Loaded only with profile "local" (bootRun uses it), never by tests.
+spring.datasource.url=jdbc:postgresql://localhost:5432/pos
+spring.datasource.username=pos_app
+spring.datasource.password=CHANGE_ME
+# demo catalog + sale menu (dev only)
+spring.flyway.locations=classpath:db/migration,classpath:db/demo

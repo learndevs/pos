@@ -1,0 +1,20 @@
+{
+  "name": "retail-pos",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Offline Windows restaurant POS: Electron + React UI + Spring Boot server",
+  "workspaces": ["ui", "desktop"],
+  "scripts": {
+    "dev": "concurrently -k -n server,ui,desktop -c blue,green,magenta \"npm:dev:server\" \"npm:dev:ui\" \"npm:dev:desktop\"",
+    "dev:server": "cd server && ./gradlew bootRun --console=plain",
+    "dev:ui": "npm run dev -w ui",
+    "dev:desktop": "wait-on -t 180000 http-get://127.0.0.1:8080/actuator/health http-get://localhost:5173 && npm run dev -w desktop",
+    "build": "npm run build -w ui && cd server && ./gradlew bootJar && cd .. && npm run build -w desktop",
+    "test": "npm test -w ui && cd server && ./gradlew test",
+    "typecheck": "npm run typecheck -w ui && npm run typecheck -w desktop"
+  },
+  "devDependencies": {
+    "concurrently": "10.0.7",
+    "wait-on": "9.5.1"
+  }
+}
