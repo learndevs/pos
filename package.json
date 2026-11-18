@@ -13,12 +13,16 @@
     "dev:server": "cd server && ./gradlew :app:bootRun --console=plain",
     "dev:ui": "npm run dev -w ui",
     "dev:desktop": "wait-on -t 180000 http-get://127.0.0.1:8080/actuator/health http-get://localhost:5173 && npm run dev -w desktop",
-    "build": "npm run build -w ui && npm run build -w admin-ui && cd server && ./gradlew :app:bootJar :admin-app:bootJar && cd .. && npm run build -w desktop",
+    "build": "npm run dist",
     "test": "npm test -w ui && cd server && ./gradlew test",
     "typecheck": "npm run typecheck -w ui && npm run typecheck -w desktop && npm run typecheck -w admin-ui",
     "dev:admin": "concurrently -k -n admin,admin-ui -c yellow,cyan \"npm:dev:admin-server\" \"npm:dev:admin-ui\"",
     "dev:admin-server": "cd server && ./gradlew :admin-app:bootRun --console=plain",
-    "dev:admin-ui": "npm run dev -w admin-ui"
+    "dev:admin-ui": "npm run dev -w admin-ui",
+    "dist:prepare": "bash packaging/runtime/prepare.sh",
+    "dist:till": "npm run dist:prepare && npm run dist:till -w desktop",
+    "dist:admin": "npm run dist:prepare && npm run dist:admin -w desktop",
+    "dist": "npm run dist:prepare && npm run dist:till -w desktop && npm run dist:admin -w desktop"
   },
   "devDependencies": {
     "concurrently": "10.0.7",

@@ -1,0 +1,32 @@
+# Admin server + its own PostgreSQL. Usage:  ./build.sh && docker compose up -d   -> http://<this-pc>:8081
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: pos_admin
+      POSTGRES_USER: pos_app
+      POSTGRES_PASSWORD: ${ADMIN_DB_PASSWORD:?set ADMIN_DB_PASSWORD in .env}
+    volumes:
+      - admin-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pos_app -d pos_admin"]
+      interval: 5s
+      retries: 20
+
+  admin:
+    build: .
+    image: retailpos/admin-server:latest
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      ADMIN_DB_URL: jdbc:postgresql://db:5432/pos_admin
+      ADMIN_DB_USER: pos_app
+      ADMIN_DB_PASSWORD: ${ADMIN_DB_PASSWORD}
+    ports:
+      - "${ADMIN_PORT:-8081}:8081"
+
+volumes:
+  admin-db:

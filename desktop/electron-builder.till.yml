@@ -1,0 +1,30 @@
+# Retail POS (till). Windows = production (signed NSIS installer); macOS = unsigned dev/test build.
+appId: com.retailpos.till
+productName: Retail POS
+artifactName: RetailPOS-${version}-${os}-${arch}.${ext}
+extraMetadata:
+  posMode: till
+beforePack: ../packaging/runtime/check-runtimes.cjs
+directories:
+  output: release/till
+files:
+  - dist/**
+  - package.json
+extraResources:
+  - from: ../server/app/build/libs/server.jar
+    to: server/server.jar
+  - from: resources/jre/${os}-${arch}
+    to: jre
+win:
+  target: [{ target: nsis, arch: [x64] }]
+  # signing: set CSC_LINK (pfx path/base64) + CSC_KEY_PASSWORD in CI; unset = unsigned test build
+nsis:
+  oneClick: false
+  perMachine: true
+  allowToChangeInstallationDirectory: true
+  deleteAppDataOnUninstall: false          # keep the till database (sales) on uninstall
+  include: ../packaging/windows/installer.nsh
+mac:
+  target: [dmg]                           # CPU: --arm64 / --x64 on the command line (runtimes must be prepared for it)
+  identity: null                          # dev/test only: unsigned, not notarized
+  category: public.app-category.business

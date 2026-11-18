@@ -8,8 +8,11 @@
     "build:ts": "tsc -p tsconfig.json",
     "dev": "npm run build:ts && node scripts/run-electron.cjs --dev",
     "smoke": "npm run build:ts && node scripts/run-electron.cjs --smoke",
-    "build": "npm run build:ts && electron-builder --win --x64",
-    "typecheck": "tsc -p tsconfig.json --noEmit"
+    "build": "npm run build:ts && electron-builder --config electron-builder.till.yml",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "dist:till": "npm run build:ts && electron-builder --config electron-builder.till.yml",
+    "dist:admin": "npm run build:ts && electron-builder --config electron-builder.admin.yml",
+    "dev:admin-server": "npm run build:ts && node scripts/run-electron.cjs --admin"
   },
   "devDependencies": {
     "@types/node": "26.6.6",

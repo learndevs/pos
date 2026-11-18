@@ -1,4 +1,5 @@
-Bundled runtimes for the packaged app (git-ignored, produced by the build):
-- `jre/`   jlink Java 21 runtime for Windows x64
-- `pgsql/` PostgreSQL 17 Windows binaries (phase 0)
-- `icon.ico`
+# Bundled runtimes (git-ignored, produced by packaging/runtime/prepare.sh)
+
+- `jre/<os>-<arch>/` jlink Java 21 runtime for the Spring Boot server
+
+PostgreSQL is not bundled: see packaging/database/README.md.

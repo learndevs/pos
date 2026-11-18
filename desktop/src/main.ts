@@ -1,7 +1,7 @@
 import { app, BrowserWindow, dialog, ipcMain, shell } from "electron";
 import path from "node:path";
 import { Backend, startBackend } from "./backend";
-import { logDir } from "./paths";
+import { logDir, mode } from "./paths";
 import { openTestDrawer } from "./devices/testDrawer";
 import { printToTestPrinter } from "./devices/testPrinter";
 
@@ -12,6 +12,9 @@ if (process.env.POS_DEV && !process.env.POS_SERVER_URL) process.env.POS_SERVER_U
 // Separate profile (data, receipts, single-instance lock) for test stacks, e.g. tools/e2e.
 if (process.env.POS_USER_DATA) app.setPath("userData", process.env.POS_USER_DATA);
 
+const MODE = mode();
+// dev: keep the admin server's data (database) apart from the till's; packaged apps have their own appId/folder
+if (MODE === "admin" && !app.isPackaged && !process.env.POS_USER_DATA) app.setPath("userData", app.getPath("userData") + "-admin-server");
 let backend: Backend | undefined;
 let win: BrowserWindow | undefined;
 
@@ -32,7 +35,7 @@ function splash(): BrowserWindow {
   s.loadURL(
     "data:text/html," +
       encodeURIComponent(
-        '<body style="font-family:system-ui;display:grid;place-items:center;height:100vh;margin:0">Starting POS...</body>',
+        `<body style="font-family:system-ui;display:grid;place-items:center;height:100vh;margin:0">Starting ${MODE === "admin" ? "POS Admin Server" : "POS"}...</body>`,
       ),
   );
   return s;
@@ -41,7 +44,7 @@ function splash(): BrowserWindow {
 async function boot(): Promise<void> {
   const s = smoke ? undefined : splash();
   try {
-    backend = await startBackend();
+    backend = await startBackend(MODE);
   } catch (err) {
     s?.close();
     if (smoke) {
@@ -55,7 +58,7 @@ async function boot(): Promise<void> {
   }
 
   if (smoke) {
-    console.log(`SMOKE OK: server healthy at ${backend.baseUrl}`);
+    console.log(`SMOKE OK: ${MODE} server healthy at ${backend.baseUrl}`);
     await backend.stop();
     app.exit(0);
     return;
@@ -83,7 +86,7 @@ async function boot(): Promise<void> {
   });
 
   // Only our own origin may load in the window; everything else opens in the system browser or is blocked.
-  const allowedOrigin = new URL(devUiUrl ?? backend.baseUrl).origin;
+  const allowedOrigin = new URL(MODE === "admin" ? backend.baseUrl : (devUiUrl ?? backend.baseUrl)).origin;
   win.webContents.on("will-navigate", (e, url) => {
     if (new URL(url).origin !== allowedOrigin) e.preventDefault();
   });
@@ -96,7 +99,8 @@ async function boot(): Promise<void> {
     s?.close();
     win!.show();
   });
-  await win.loadURL(devUiUrl ?? `${backend.baseUrl}/`);
+  if (MODE === "admin") win.setTitle("Retail POS Admin Server");
+  await win.loadURL(MODE === "admin" ? `${backend.baseUrl}/` : (devUiUrl ?? `${backend.baseUrl}/`));
 }
 
 let quitting = false;

@@ -1,4 +1,3 @@
-dist/
-release/
 resources/jre/
-resources/pgsql/
+release/
+dist/

@@ -6,7 +6,8 @@ const electron = require("electron"); // path to the binary when required from N
 const env = { ...process.env };
 delete env.ELECTRON_RUN_AS_NODE;
 if (process.argv.includes("--dev")) env.POS_DEV = "1";
+if (process.argv.includes("--admin")) env.POS_MODE = "admin";
 
-const args = ["."].concat(process.argv.slice(2).filter((a) => a !== "--dev"));
+const args = ["."].concat(process.argv.slice(2).filter((a) => a !== "--dev" && a !== "--admin"));
 const child = spawn(electron, args, { stdio: "inherit", env, cwd: __dirname + "/.." });
 child.on("exit", (code) => process.exit(code ?? 0));
