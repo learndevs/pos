@@ -1,0 +1,8 @@
+// Receipt templates (Mustache HTML) rendered from completed sales.
+dependencies {
+	api project(':platform')
+	api project(':modules:sales')
+	api project(':modules:settings')
+	api project(':modules:identity')
+	implementation 'com.samskivert:jmustache'   // receipt HTML templates
+}

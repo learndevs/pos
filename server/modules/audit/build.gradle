@@ -1,0 +1,4 @@
+// audit_log: append-only audit trail.
+dependencies {
+	api project(':platform')
+}

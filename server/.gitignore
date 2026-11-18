@@ -7,5 +7,6 @@ build/
 out/
 # local secrets
 config/application-local.properties
+config/application-admin-local.properties
 config/*.local.*
 .env

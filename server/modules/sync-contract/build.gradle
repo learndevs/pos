@@ -1,0 +1,6 @@
+// Shared sync contract (admin <-> POS): versioned JSON records + entity -> record mappers.
+// Both apps use this exact code, so what admin sends is exactly what the till reads.
+dependencies {
+	api project(':platform')
+	api project(':modules:catalog')
+}

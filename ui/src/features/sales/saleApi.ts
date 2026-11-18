@@ -40,6 +40,8 @@ export interface SaleLine {
   quantity: number | null;
   unitPriceMinor: number | null;
   itemClass: "MERCHANDISE" | "NON_MERCHANDISE" | null;
+  discountMinor: number | null;
+  discountPercent: number | null;
   tenderMethod: "CASH" | "CARD" | "OTHER" | null;
   tenderedMinor: number | null;
   changeMinor: number | null;
@@ -95,6 +97,7 @@ export const saleApi = {
   addItem: (id: string, productId: string, quantity: number) => post<Sale>(`/api/sales/${id}/items`, { productId, quantity }),
   setQuantity: (id: string, itemId: string, quantity: number) => put<Sale>(`/api/sales/${id}/items/${itemId}/quantity`, { quantity }),
   removeLine: (id: string, itemId: string) => api<Sale>(`/api/sales/${id}/items/${itemId}`, { method: "DELETE" }),
+  lineDiscount: (id: string, itemId: string, percent: number) => post<Sale>(`/api/sales/${id}/items/${itemId}/discount`, { percent }),
   orderType: (id: string, orderType: Sale["orderType"]) => put<Sale>(`/api/sales/${id}/order-type`, { orderType }),
   tender: (id: string, method: string, amountMinor: number | null) =>
     post<Sale>(`/api/sales/${id}/tenders`, amountMinor == null ? { method } : { method, amountMinor }),

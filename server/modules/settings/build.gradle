@@ -1,0 +1,4 @@
+// app_setting access (business, receipt, discount limits).
+dependencies {
+	api project(':platform')
+}

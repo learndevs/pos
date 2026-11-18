@@ -29,7 +29,8 @@ Values are HTML-escaped. Empty strings count as "missing", so `{{#business.phone
 | `{{sale.receiptNo}}`, `{{sale.txnNo}}` | `20261119-0001`, `1` |
 | `{{sale.date}}`, `{{sale.time}}`, `{{sale.businessDate}}` | `2026-11-19`, `14:32` |
 | `{{sale.cashier}}`, `{{sale.orderType}}` | `Amy`, `Takeaway` |
-| `{{#lines}} {{qty}} {{name}} {{unitPrice}} {{amount}} {{#showUnit}}..{{/showUnit}} {{/lines}}` | one per sale item (`showUnit` when qty is not 1) |
+| `{{#lines}} {{qty}} {{name}} {{unitPrice}} {{amount}} {{net}} {{#showUnit}}..{{/showUnit}} {{/lines}}` | one per sale item: `amount` before line discount, `net` after; `showUnit` when qty is not 1 |
+| `{{#hasDiscount}} {{discountPercent}} {{discount}} {{/hasDiscount}}` (inside `lines`) | line discount, e.g. `10`, `$2.00` |
 | `{{#tenders}} {{method}} {{amount}} {{tendered}} {{/tenders}}` | `Cash`, applied amount, amount handed over |
 | `{{totals.subtotal}}`, `{{totals.tax}}`, `{{totals.total}}`, `{{totals.paid}}`, `{{totals.change}}` | formatted money |
 | `{{#totals.hasChange}}..{{/totals.hasChange}}` | only when change was given |

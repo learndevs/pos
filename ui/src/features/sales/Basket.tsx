@@ -40,6 +40,11 @@ export function Basket() {
               <small className="muted">
                 {money(l.unitPriceMinor ?? 0)} each{l.itemClass === "NON_MERCHANDISE" ? " · charge" : ""}
               </small>
+              {!!l.discountMinor && (
+                <small className="discount">
+                  -{l.discountPercent}% · -{money(l.discountMinor)}
+                </small>
+              )}
             </span>
             <span className="c">{l.quantity}</span>
             <span className="num">{money(l.amountMinor)}</span>

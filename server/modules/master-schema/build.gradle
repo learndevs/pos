@@ -1,0 +1,2 @@
+// Shared master-data migrations (db/master), run by BOTH the POS and the admin database.
+// Versions share one global sequence with db/migration (POS) and db/admin (admin).

@@ -1,0 +1,5 @@
+// Cash sessions (day start), later cash movements and day end.
+dependencies {
+	api project(':platform')
+	api project(':modules:identity')
+}

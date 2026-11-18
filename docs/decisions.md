@@ -17,6 +17,11 @@
 | D-014 | Decided | Menu grid is 4 rows x 3 columns per page (V5); right column split 50/50 keypad / menu. |
 | D-015 | Decided | Themes are swappable visual layers over one layout: Default (white), Dark, Liquid Glass. Chosen per terminal; Default recommended on low-end hardware. |
 | D-016 | Decided | Sale cycle: always an open transaction; tender -> drawer (cash only) -> wait for close -> receipt from the transaction via an HTML Mustache template -> next transaction. Hardware is tested with Electron test windows (drawer, printer PDF). |
+| D-017 | Decided | Line discount is a whole percent stored on the line (`discount_bp`), re-applied when qty changes. Cashier limit from `app_setting.discount.cashierMaxPercent` (10%); above needs DISCOUNT_UNLIMITED. |
+| D-018 | Decided | Server split into Gradle modules (platform, 9 feature modules, app); events (SaleCompleted) instead of upward calls; migrations stay in app. |
+| D-019 | Decided | Admin panel is a separate web app + DB (`pos_admin`), cloud-ready, run locally for now. Admin is the only writer of master data; tills pull published releases (change feed with sequence numbers), apply in one transaction. |
+| D-020 | Decided | Admin and POS share module jars (entities, rules, sync-contract). Migrations use one global version sequence; folder decides the DB: db/migration (POS), db/master (both), db/admin (admin). |
+| D-021 | Decided | Config sync uses admin-built **zip packages** (chosen entities + date range or full snapshot + chosen tills), fetched and applied atomically by tills, with status reported back. Every finished transaction (completed + cancelled) is archived to admin via an outbox. |
 | D-006 | Open | Recipe-level stock deduction in v1 or v1.1? Default: v1.1. |
 
 ## Log
@@ -28,3 +33,7 @@
 - 2026-11-19: Sale screen, action framework + ITEM menu, JPA refactor, 4x3 menu grid (D-012..D-014).
 - 2026-11-19: Theme system with Liquid Glass (D-015).
 - 2026-11-19: Sale cycle with drawer + receipt, test devices, product search, header actions (D-016).
+- 2026-11-19: Line discount (D-017), first feature built with the pos-feature workflow.
+- 2026-11-19: Server module refactor done (D-018).
+- 2026-11-19: Admin panel + sync design (D-019, D-020), phase 1 started.
+- 2026-11-19: Packages (zip) + transaction archive (D-021) replace release/feed sync. Phase 1 done and verified end to end.

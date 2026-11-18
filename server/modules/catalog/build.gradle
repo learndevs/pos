@@ -1,0 +1,4 @@
+// Products, categories, tax rates, product search.
+dependencies {
+	api project(':platform')
+}

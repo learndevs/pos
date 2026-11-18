@@ -19,6 +19,15 @@ npm run dev             # server :8080 + Vite :5173 + Electron window
 ```
 First launch shows the owner setup screen; after that, sign in with a user tile and PIN.
 
+## Admin panel (dev)
+```sql
+CREATE DATABASE pos_admin OWNER pos_app ENCODING 'UTF8';       -- admin dev
+CREATE DATABASE pos_admin_test OWNER pos_app ENCODING 'UTF8';  -- admin tests (wiped each run)
+```
+Copy `server/config/application-admin-local.properties.example` to `application-admin-local.properties`.
+`npm run dev:admin`, open http://localhost:5175, create the admin account on first run.
+The dev till syncs from it via `pos.sync.admin-url` / `pos.sync.terminal-token=dev-terminal-token` (in `application-local.properties`).
+
 ## Server
 ```bash
 cd server

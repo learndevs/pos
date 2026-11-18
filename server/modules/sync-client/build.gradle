@@ -1,0 +1,7 @@
+// POS side of admin sync: fetch + apply config packages (zip), upload finished transactions (outbox).
+dependencies {
+	api project(':platform')
+	api project(':modules:sync-contract')
+	api project(':modules:sales')        // TransactionFinished -> archive outbox
+	api project(':modules:identity')     // cashier name in the archived transaction
+}

@@ -1,0 +1,6 @@
+spring:
+  datasource:
+    url: ${TEST_ADMIN_DB_URL:jdbc:postgresql://localhost:5432/pos_admin_test}
+    username: pos_app
+  flyway:
+    clean-disabled: false

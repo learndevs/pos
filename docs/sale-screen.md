@@ -70,6 +70,7 @@ Each menu is a folder tree (`menu` -> `menu_folder` -> `menu_button`); every fol
 | DESELECT_LINE | Done | - | - | back to previous menu |
 | QTY | Set qty | SALE line | number | sets quantity |
 | QTY_PLUS / QTY_MINUS | Qty +1 / -1 | SALE line | - | changes quantity (min 1) |
+| LINE_DISCOUNT | Line discount | SALE line (ORDER_CREATE; over cashier limit needs DISCOUNT_UNLIMITED) | number = whole % (0 removes) | discounts the line, totals and tax re-calculated |
 | VOID_LINE | Void line | any line | confirm | removes line |
 | TENDER | Cash / Card / Other / presets | sale, items | keypad = amount, else preset, else exact | adds payment; when paid: drawer (cash) -> wait for close -> receipt -> next transaction |
 | TAKEAWAY_TOGGLE | Dine in / Takeaway | day | - | toggles order type |
@@ -79,6 +80,6 @@ Each menu is a folder tree (`menu` -> `menu_folder` -> `menu_button`); every fol
 | SIGN_OUT | Sign out | - | - | ends session |
 | (event) product | Product search result | day | keypad = qty | same as PRODUCT |
 
-Listed but not implemented (`pos_function.available = false`, shown greyed): PRICE_OVERRIDE, LINE_DISCOUNT, TXN_DISCOUNT, SET_TABLE, HOLD_TXN, RECALL_TXN, REFUND, REPRINT, PAID_IN, PAID_OUT.
+Listed but not implemented (`pos_function.available = false`, shown greyed): PRICE_OVERRIDE, TXN_DISCOUNT, SET_TABLE, HOLD_TXN, RECALL_TXN, REFUND, REPRINT, PAID_IN, PAID_OUT.
 
 How to add one: see the `pos-sale-actions` skill.

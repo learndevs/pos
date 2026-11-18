@@ -9,6 +9,9 @@ const smoke = process.argv.includes("--smoke");   // start server, check health,
 const devUiUrl = process.env.POS_DEV ? (process.env.POS_UI_URL ?? "http://localhost:5173") : undefined;
 if (process.env.POS_DEV && !process.env.POS_SERVER_URL) process.env.POS_SERVER_URL = "http://127.0.0.1:8080";
 
+// Separate profile (data, receipts, single-instance lock) for test stacks, e.g. tools/e2e.
+if (process.env.POS_USER_DATA) app.setPath("userData", process.env.POS_USER_DATA);
+
 let backend: Backend | undefined;
 let win: BrowserWindow | undefined;
 

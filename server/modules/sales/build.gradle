@@ -1,0 +1,9 @@
+// Transaction aggregate: basket items, tenders, discounts, completion.
+dependencies {
+	api project(':platform')
+	api project(':modules:catalog')
+	api project(':modules:cash')
+	api project(':modules:identity')
+	api project(':modules:settings')
+	api project(':modules:audit')
+}

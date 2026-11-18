@@ -1,0 +1,5 @@
+// Sale / tender / item menus, folders, buttons, pos_function catalogue.
+dependencies {
+	api project(':platform')
+	api project(':modules:catalog')
+}

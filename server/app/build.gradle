@@ -1,0 +1,53 @@
+// The Spring Boot application: wires all modules, owns security config, Flyway migrations
+// (one history for all modules) and packaging (server.jar, used by the desktop app).
+apply plugin: 'org.springframework.boot'
+
+description = 'Retail POS local API'
+
+dependencies {
+	implementation project(':platform')
+	implementation project(':modules:master-schema')
+	implementation project(':modules:audit')
+	implementation project(':modules:settings')
+	implementation project(':modules:catalog')
+	implementation project(':modules:identity')
+	implementation project(':modules:cash')
+	implementation project(':modules:menu')
+	implementation project(':modules:inventory')
+	implementation project(':modules:sales')
+	implementation project(':modules:receipt')
+	implementation project(':modules:sync-client')
+
+	implementation 'org.springframework.boot:spring-boot-starter-actuator'
+	implementation 'org.springframework.boot:spring-boot-starter-flyway'
+	implementation 'org.flywaydb:flyway-database-postgresql'
+	runtimeOnly 'org.postgresql:postgresql'
+
+	testImplementation 'org.springframework.boot:spring-boot-starter-actuator-test'
+	testImplementation 'org.springframework.boot:spring-boot-starter-data-jpa-test'
+	testImplementation 'org.springframework.boot:spring-boot-starter-flyway-test'
+	testImplementation 'org.springframework.boot:spring-boot-starter-security-test'
+	testImplementation 'org.springframework.boot:spring-boot-starter-validation-test'
+	testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
+}
+
+// Package the built UI (ui/dist) into the jar as static content, served same-origin with the API.
+tasks.named('processResources') {
+	from(rootProject.file('../ui/dist')) {
+		into 'static'
+	}
+}
+
+tasks.named('bootJar') {
+	archiveFileName = 'server.jar'   // fixed name: desktop/electron-builder.yml bundles it
+}
+
+tasks.named('jar') {
+	enabled = false
+}
+
+// Dev run uses profile "local" -> server/config/application-local.properties (git-ignored DB credentials).
+tasks.named('bootRun') {
+	workingDir = rootProject.projectDir
+	systemProperty 'spring.profiles.active', System.getenv('SPRING_PROFILES_ACTIVE') ?: 'local'
+}

@@ -17,4 +17,5 @@ description: Domain rules for the POS: money, sales, stock ledgers, cash session
 10. **DB enforces:** triggers freeze finished transactions and keep the ledgers append-only; no writes against a CLOSED session. See `docs/database-schema.md`.
 
 When changing any of these, update `docs/tech-spec.md` section 5 and log it in `docs/decisions.md`.
-11. **Menus:** `SALE`, `TENDER`, `ITEM` (line selected). Each is a folder tree; each page is a 4 x 3 button grid. Button types: PRODUCT, OPEN_FOLDER, TENDER, FUNCTION (a `pos_function` code), SWITCH_MENU.
+11. **Discounts:** line discount is a whole percent stored on the line (`discount_bp`) and re-applied on qty change; amount half-up; tax on the discounted amount. Above `app_setting.discount.cashierMaxPercent` needs DISCOUNT_UNLIMITED. Audited.
+12. **Menus:** `SALE`, `TENDER`, `ITEM` (line selected). Each is a folder tree; each page is a 4 x 3 button grid. Button types: PRODUCT, OPEN_FOLDER, TENDER, FUNCTION (a `pos_function` code), SWITCH_MENU.

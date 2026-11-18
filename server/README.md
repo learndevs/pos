@@ -8,23 +8,25 @@ Spring Boot 4 local API for the POS. Java 21 bytecode, PostgreSQL, Flyway.
 2. `./gradlew bootRun`, then check `curl http://127.0.0.1:8080/actuator/health`.
 
 ## Test
-`./gradlew test` (profile `test`) rebuilds the `pos_test` database from the migrations (clean + migrate) and runs the schema rule tests.
+`./gradlew test` runs every module; integration tests (profile `test`, in `app/`) rebuild the `pos_test` database from the migrations (clean + migrate) and runs the schema rule tests.
 
-## Layout
+## Layout (Gradle multi-module)
 ```
-src/main/java/com/retailpos/server/
-  common/     UUIDv7, money, errors
-  config/     security and Spring config
-  identity/   users, roles, PIN login
-  settings/   app_setting
-  catalog/    products, categories, tax, modifiers, tables
-  inventory/  stock items, recipes, stock ledger
-  cash/       cash sessions, cash movements, Z-report
-  sales/      transactions, basket items (sale/tender), refunds
-  printing/   ESC/POS, print queue
-  reporting/  report queries
-  audit/      audit_log
-src/main/resources/db/migration/   Flyway migrations (V1 schema, V2 seed)
-src/test/java/.../schema/          DB integrity rule tests
+platform/             shared kernel: BaseEntity, UuidV7, PosException
+modules/audit         audit_log
+modules/settings      app_setting, PosSettings
+modules/catalog       products, categories, tax, search
+modules/identity      users, roles, PIN login, sessions
+modules/cash          day start (cash sessions)
+modules/menu          sale / tender / item menus, pos_function
+modules/inventory     stock ledger; listens to SaleCompleted
+modules/sales         transaction aggregate, tenders, discounts
+modules/receipt       receipt templates + rendering
+modules/master-schema shared master-data migrations (db/master, run by POS and admin)
+modules/sync-contract shared JSON records + PackageZip (admin <-> POS)
+modules/sync-server   admin: change log, packages, terminals, archive
+modules/sync-client   POS: fetch/apply packages, transaction outbox
+app/                  POS Spring Boot app -> build/libs/server.jar
+admin-app/            admin Spring Boot app -> build/libs/admin.jar (serves admin-ui)
 ```
-Each feature package holds its own entity, repository, service and controller (package by feature, not by layer).
+Rules and how to add a module: `.claude/skills/pos-backend/SKILL.md`.

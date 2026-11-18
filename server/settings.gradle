@@ -1,1 +1,25 @@
 rootProject.name = 'server'
+
+// Shared kernel
+include 'platform'
+include 'modules:master-schema'     // shared master-data migrations (db/master)
+
+// One module per functionality (see docs/plans/server-modules.md)
+include 'modules:audit'
+include 'modules:settings'
+include 'modules:catalog'
+include 'modules:identity'
+include 'modules:cash'
+include 'modules:menu'
+include 'modules:inventory'
+include 'modules:sales'
+include 'modules:receipt'
+
+// Admin <-> POS configuration sync
+include 'modules:sync-contract'     // shared: JSON records + mappers
+include 'modules:sync-client'       // POS: pull + apply releases
+include 'modules:sync-server'       // admin: change log, publish, feed API
+
+// Spring Boot applications
+include 'app'          // POS server -> server.jar
+include 'admin-app'    // admin panel backend -> admin.jar

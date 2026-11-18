@@ -31,7 +31,7 @@ PosEvent (button | enter | total | line)
 - `dispatcher.ts` usePosDispatch (the only place that mutates screen state)
 - `navigation.ts` OPEN_FOLDER, SWITCH_MENU, TOTAL, SELECT_LINE, DESELECT_LINE
 - `sale.ts` PRODUCT, TAKEAWAY_TOGGLE, CANCEL_TXN, OPEN_DAY
-- `line.ts` QTY, QTY_PLUS, QTY_MINUS, VOID_LINE (ITEM menu)
+- `line.ts` QTY, QTY_PLUS, QTY_MINUS, LINE_DISCOUNT, VOID_LINE (ITEM menu)
 - `tender.ts` TENDER
 - `system.ts` OPEN_DRAWER, SIGN_OUT
 - `index.ts` imports every action file (register new files here)
@@ -43,7 +43,9 @@ PosEvent (button | enter | total | line)
 4. Error messages are for the cashier: short, plain, actionable.
 5. Permissions come from `pos_function.required_permission`; the server must also enforce them (`@PreAuthorize`).
 
-## Checklist: add a new function button (e.g. LINE_DISCOUNT)
+## Checklist: add a new function button
+Worked example to copy: LINE_DISCOUNT (`docs/features/line-discount.md`, `V7__line_discount.sql`, `PosTransaction.discountLine`, `SalesService.discountLine`, `actions/line.ts`, `tools/e2e/line-discount.mjs`).
+
 1. **DB** new migration: `INSERT INTO pos_function (code, name, input, required_permission, needs_selected_line, available)`; set `available = true` when implemented (existing row: `UPDATE`).
 2. **Place it** in a menu (same migration): `INSERT INTO menu_button (... folder_id, page, grid_row 0-3, grid_col 0-2, label, action_type 'FUNCTION', function_code)`. ITEM root folder = `...0b0003`, SALE root = `...0b0001`, TENDER root = `...0b0002`.
 3. **Server** (if it changes data): domain method on the aggregate (`PosTransaction`), service method, controller endpoint with `@PreAuthorize`; add to `saleApi.ts`.

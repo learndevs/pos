@@ -9,7 +9,7 @@ export function resourcesDir(): string {
 export function serverJar(): string {
   return app.isPackaged
     ? path.join(resourcesDir(), "server", "server.jar")
-    : path.resolve(__dirname, "..", "..", "server", "build", "libs", "server.jar");
+    : path.resolve(__dirname, "..", "..", "server", "app", "build", "libs", "server.jar");
 }
 
 /** Bundled jlink runtime in production; `java` on PATH in dev. */

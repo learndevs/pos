@@ -6,7 +6,7 @@ files:
   - dist/**
   - package.json
 extraResources:
-  - from: ../server/build/libs/server.jar
+  - from: ../server/app/build/libs/server.jar
     to: server/server.jar
   # Produced by the jlink step (see docs/dev-setup.md, packaging):
   - from: resources/jre

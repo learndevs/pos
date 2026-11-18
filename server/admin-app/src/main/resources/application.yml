@@ -1,0 +1,30 @@
+spring:
+  application:
+    name: pos-admin
+  datasource:
+    url: ${ADMIN_DB_URL:jdbc:postgresql://localhost:5432/pos_admin}
+    username: ${ADMIN_DB_USER:pos_app}
+    password: ${ADMIN_DB_PASSWORD:}
+    hikari:
+      maximum-pool-size: 10
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate.jdbc.time_zone: UTC
+  mvc:
+    problemdetails:
+      enabled: true
+  flyway:
+    locations: classpath:db/master,classpath:db/admin   # shared master data + admin-only
+
+server:
+  address: ${ADMIN_ADDRESS:127.0.0.1}   # local for now; 0.0.0.0 behind TLS when hosted
+  port: ${ADMIN_PORT:8081}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health

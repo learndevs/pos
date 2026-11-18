@@ -1,0 +1,5 @@
+// Stock items, recipes, stock ledger. Deducts stock when a sale completes (SaleCompleted event).
+dependencies {
+	api project(':platform')
+	api project(':modules:sales')     // listens to SaleCompleted
+}

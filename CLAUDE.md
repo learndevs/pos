@@ -1,6 +1,11 @@
 # POS project notes
-Offline Windows restaurant POS. Read `docs/tech-spec.md` before architectural changes.
-Project skills live in `.claude/skills/`; use the matching one for the area you touch.
-When a decision changes, update `docs/decisions.md` (see `pos-docs` skill).
-Hard rules: money = integer minor units; sales/stock are append-only ledgers; API binds to 127.0.0.1 only.
-Server: `cd server && ./gradlew test` before finishing backend work (needs local Postgres; see docs/dev-setup.md).
+Offline Windows restaurant POS: Electron + React UI (`ui/`, `desktop/`) and Spring Boot + PostgreSQL (`server/`).
+
+**Start here:** `docs/architecture.md` (how requests flow, where code goes), then the `pos-feature` skill before building anything.
+Feature specs: `docs/features/`. Decisions: `docs/decisions.md`. Area skills live in `.claude/skills/`.
+
+Hard rules: money = integer minor units; finished sales are immutable (refund instead); stock/cash/audit are append-only;
+API binds to 127.0.0.1 only; business rules live on the server; UI reaches devices only via the preload bridge.
+
+Verify by running: `cd server && ./gradlew test`, UI/desktop typecheck, and `tools/e2e/test-stack.sh up` + a flow script.
+Tests stay light (one flow test per feature); never point tests or e2e at the dev DB `pos`.

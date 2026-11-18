@@ -1,0 +1,5 @@
+// Admin side of configuration sync: change log, publish (releases), terminals, change feed API.
+dependencies {
+	api project(':platform')
+	api project(':modules:sync-contract')
+}

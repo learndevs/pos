@@ -1,0 +1,5 @@
+# Copy to config/application-admin-local.properties (git-ignored). Profile "admin-local".
+spring.datasource.url=jdbc:postgresql://localhost:5432/pos_admin
+spring.datasource.username=pos_app
+spring.datasource.password=CHANGE_ME
+spring.flyway.locations=classpath:db/master,classpath:db/admin,classpath:db/admin-demo

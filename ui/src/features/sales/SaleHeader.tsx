@@ -3,6 +3,7 @@ import { useAuth } from "../../app/authStore";
 import { ThemePicker } from "../../app/ThemePicker";
 import { authApi } from "../users/authApi";
 import { HeaderActions } from "./HeaderActions";
+import { SyncChip } from "./SyncChip";
 import { useSaleData } from "./useSaleData";
 
 export function SaleHeader() {
@@ -32,6 +33,7 @@ export function SaleHeader() {
       </div>
       <HeaderActions />
       <div className="hdr-right">
+        <SyncChip />
         <ThemePicker />
         <span className="who">
           {user?.displayName}

@@ -3,4 +3,7 @@ spring.datasource.url=jdbc:postgresql://localhost:5432/pos
 spring.datasource.username=pos_app
 spring.datasource.password=CHANGE_ME
 # demo catalog + sale menu (dev only)
-spring.flyway.locations=classpath:db/migration,classpath:db/demo
+spring.flyway.locations=classpath:db/migration,classpath:db/master,classpath:db/demo
+# config sync from the admin app (empty = stand-alone till)
+pos.sync.admin-url=http://127.0.0.1:8081
+pos.sync.terminal-token=dev-terminal-token

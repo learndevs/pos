@@ -1,0 +1,7 @@
+// Shared kernel: BaseEntity, UuidV7, PosException. Exposes the common Spring stack to every module.
+dependencies {
+	api 'org.springframework.boot:spring-boot-starter-data-jpa'
+	api 'org.springframework.boot:spring-boot-starter-webmvc'
+	api 'org.springframework.boot:spring-boot-starter-validation'
+	api 'org.springframework.boot:spring-boot-starter-security'
+}

@@ -1,0 +1,5 @@
+// Users, roles, PIN login, sessions.
+dependencies {
+	api project(':platform')
+	api project(':modules:audit')
+}

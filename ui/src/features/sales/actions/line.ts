@@ -31,6 +31,22 @@ defineAction({
 });
 
 defineAction({
+  id: "LINE_DISCOUNT",
+  needs: { line: "SALE" },
+  input: { kind: "number", prompt: ({ line }) => `Discount % for ${line?.name} (0 removes it)` },
+  async run({ sale, line, input, api, money }) {
+    const after = await api.lineDiscount(sale!.id, line!.id, input!);
+    const updated = after.lines.find((l) => l.id === line!.id);
+    return [
+      { type: "sale", sale: after },
+      input === 0
+        ? msg("info", `Discount removed from ${line!.name}`)
+        : msg("success", `${line!.name}: -${input}% (-${money(updated?.discountMinor ?? 0)})`),
+    ];
+  },
+});
+
+defineAction({
   id: "VOID_LINE",
   needs: { line: "ANY" },
   confirm: ({ line }) => `Void line ${line?.lineNo} (${line?.name ?? line?.tenderMethod})?`,
