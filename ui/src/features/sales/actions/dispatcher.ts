@@ -2,6 +2,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { ApiError } from "../../../api/client";
 import { useAuth } from "../../../app/authStore";
 import { saleApi, type Sale } from "../saleApi";
+import { devices } from "../../../devices/devices";
 import { useSaleScreen } from "../saleStore";
 import { useSaleData, SALE_KEY } from "../useSaleData";
 import { action, actionFor, blockedReason } from "./registry";
@@ -51,7 +52,41 @@ export function usePosDispatch() {
         case "message": ui.say({ tone: e.tone, text: e.text }); break;
         case "refreshDay": await qc.invalidateQueries({ queryKey: ["cash-session"] }); break;
         case "signOut": signOut(); break;
+        case "finishSale": await finishSale(e.sale); break;
       }
+    }
+  }
+
+  /**
+   * End of a sale: open the drawer (cash sales) and wait until it is closed, then print the receipt
+   * generated from the transaction, then start the next empty transaction.
+   */
+  async function finishSale(sale: Sale) {
+    ui.setMenu("SALE");
+    try {
+      if (sale.cashTendered) {
+        ui.setMode({ kind: "BUSY", prompt: "Cash drawer is open. Close the drawer to continue." });
+        await devices.openDrawer({
+          changeText: sale.changeMinor > 0 ? data.money(sale.changeMinor) : undefined,
+          totalText: data.money(sale.totalMinor),
+        });
+      }
+      ui.setMode({ kind: "BUSY", prompt: `Printing receipt ${sale.receiptNo}...` });
+      let printed = true;
+      try {
+        await devices.printReceipt(await saleApi.receiptHtml(sale.id), `receipt-${sale.receiptNo}`);
+      } catch {
+        printed = false;
+      }
+      const next = await saleApi.start();
+      qc.setQueryData(SALE_KEY, next);
+      ui.say(
+        printed
+          ? { tone: "success", text: `Receipt ${sale.receiptNo} printed${sale.changeMinor > 0 ? ` · Change ${data.money(sale.changeMinor)}` : ""}` }
+          : { tone: "error", text: `Sale ${sale.receiptNo} completed, but the receipt did not print.` },
+      );
+    } finally {
+      ui.setMode({ kind: "IDLE" });
     }
   }
 
@@ -66,6 +101,7 @@ export function usePosDispatch() {
 
   /** Guard + input + confirm, then run. */
   async function start(def: ActionDef | undefined, extra: Partial<ActionContext>) {
+    if (ui.mode.kind === "BUSY") return; // finishing a sale: ignore presses
     const ctx = context(extra);
     const blocked = blockedReason(def, ctx, extra.button);
     if (blocked || !def) return ui.say({ tone: "error", text: blocked ?? "Not available." });
@@ -86,8 +122,11 @@ export function usePosDispatch() {
         return start(action("TOTAL"), {});
       case "line":
         return start(action("SELECT_LINE"), { lineId: event.lineId });
+      case "product":
+        return start(action("PRODUCT"), { productId: event.productId });
       case "enter": {
         const mode = ui.mode;
+        if (mode.kind === "BUSY") return;
         if (mode.kind === "INPUT") {
           if (ui.keypad === "") return ui.say({ tone: "error", text: "Type a number first." });
           const input = Number(ui.keypad);
@@ -117,6 +156,7 @@ export function usePosDispatch() {
     !blockedReason(actionFor(button), { ...context({ button }), dayOpen: true }, button);
 
   function cancelPrompt() {
+    if (ui.mode.kind === "BUSY") return;
     ui.setMode({ kind: "IDLE" });
     ui.clearKeypad();
     ui.say(undefined);

@@ -46,7 +46,7 @@ public class SalesService {
     public SaleView start(UUID userId) {
         return SaleView.of(openFor(userId).orElseGet(() -> {
             var session = cash.requireOpen();
-            return transactions.save(PosTransaction.startSale(session.getId(), session.getBusinessDate(), userId, clock.instant()));
+            return transactions.save(PosTransaction.startSale(transactions.nextTxnNo(), session.getId(), session.getBusinessDate(), userId, clock.instant()));
         }));
     }
 

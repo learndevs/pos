@@ -71,12 +71,13 @@ Each menu is a folder tree (`menu` -> `menu_folder` -> `menu_button`); every fol
 | QTY | Set qty | SALE line | number | sets quantity |
 | QTY_PLUS / QTY_MINUS | Qty +1 / -1 | SALE line | - | changes quantity (min 1) |
 | VOID_LINE | Void line | any line | confirm | removes line |
-| TENDER | Cash / Card / Other / presets | sale, items | keypad = amount, else preset, else exact | adds payment; completes when paid |
+| TENDER | Cash / Card / Other / presets | sale, items | keypad = amount, else preset, else exact | adds payment; when paid: drawer (cash) -> wait for close -> receipt -> next transaction |
 | TAKEAWAY_TOGGLE | Dine in / Takeaway | day | - | toggles order type |
 | CANCEL_TXN | Cancel sale | sale, ORDER_VOID | confirm | cancels sale |
-| OPEN_DRAWER | Open drawer | DRAWER_OPEN | - | (no drawer yet) |
+| OPEN_DRAWER | Open drawer | DRAWER_OPEN | - | opens the (test) drawer, waits for close |
 | OPEN_DAY | Enter with no day open | - | keypad = float | opens cash session |
 | SIGN_OUT | Sign out | - | - | ends session |
+| (event) product | Product search result | day | keypad = qty | same as PRODUCT |
 
 Listed but not implemented (`pos_function.available = false`, shown greyed): PRICE_OVERRIDE, LINE_DISCOUNT, TXN_DISCOUNT, SET_TABLE, HOLD_TXN, RECALL_TXN, REFUND, REPRINT, PAID_IN, PAID_OUT.
 

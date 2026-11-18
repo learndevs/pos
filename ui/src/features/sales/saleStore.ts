@@ -6,7 +6,8 @@ import type { ActionContext, ActionDef } from "./actions/types";
 export type Mode =
   | { kind: "IDLE" }
   | { kind: "INPUT"; def: ActionDef; ctx: ActionContext; prompt: string }    // e.g. Set qty with no number typed
-  | { kind: "CONFIRM"; def: ActionDef; ctx: ActionContext; prompt: string }; // e.g. "Void line 2?"
+  | { kind: "CONFIRM"; def: ActionDef; ctx: ActionContext; prompt: string } // e.g. "Void line 2?"
+  | { kind: "BUSY"; prompt: string };                                         // sale finishing: drawer / printing
 
 export type Message = { tone: "info" | "success" | "error"; text: string } | undefined;
 

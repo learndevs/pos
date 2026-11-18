@@ -21,6 +21,8 @@ PosEvent (button | enter | total | line)
 - The keypad value is the argument for the next press: quantity before a product, amount (minor units) before a tender, number for an INPUT prompt.
 - Menus: `SALE` (default), `TENDER` (TOTAL toggles), `ITEM` (opens when a basket line is selected; Done / deselect returns to the previous menu).
 - Buttons grey out from the same guards (`isEnabled`), except "day not open", which stays pressable to explain itself.
+- Sale lifecycle: there is always an OPEN transaction while the day is open (`useAutoTransaction` starts one on sign-in, day start, cancel). Completing a tender returns the `finishSale` effect: mode BUSY -> drawer (cash) -> wait for close -> receipt print -> next transaction. While BUSY every press is ignored.
+- Events also include `{ type: "product", productId }` (product search) which runs PRODUCT with `ctx.productId`.
 
 ## Files
 `ui/src/features/sales/actions/`

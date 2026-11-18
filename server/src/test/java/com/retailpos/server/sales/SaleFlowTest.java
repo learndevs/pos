@@ -19,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 class SaleFlowTest {
 
     @Autowired SalesService sales;
+    @Autowired com.retailpos.server.receipt.ReceiptService receipts;
     @Autowired JdbcTemplate jdbc;
     @Autowired EntityManager em;   // JPA writes are flushed before JDBC asserts read them
 
@@ -48,6 +49,8 @@ class SaleFlowTest {
         assertThat(sale.status()).isEqualTo("COMPLETED");
         assertThat(sale.changeMinor()).isEqualTo(2800);
         assertThat(sale.receiptNo()).isEqualTo("20261119-0001");
+        assertThat(receipts.render(sale.id())).contains("20261119-0001", "Burger", "$22.00", "$28.00");   // total, change
+
         em.flush();
         assertThat(jdbc.queryForObject("SELECT quantity FROM stock_on_hand WHERE stock_item_id = ?", BigDecimal.class, bun))
             .isEqualByComparingTo("-2");

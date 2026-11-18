@@ -50,7 +50,7 @@
 }
 
 /* ---------- reusable glass surfaces ---------- */
-:root[data-theme="glass"] :is(.sale-header, .basket, .dialog-panel, .menu-bar, .card) {
+:root[data-theme="glass"] :is(.sale-header, .basket, .dialog-panel, .menu-bar, .card, .modal) {
   background: var(--glass-sheen), var(--surface);
   -webkit-backdrop-filter: var(--glass-blur);
   backdrop-filter: var(--glass-blur);
@@ -60,14 +60,14 @@
   overflow: hidden;
 }
 
-:root[data-theme="glass"] :is(.keypad .k, .menu-btn, .user-tile, .pinpad .key, .btn, .nav-btn) {
+:root[data-theme="glass"] :is(.keypad .k, .menu-btn, .user-tile, .pinpad .key, .btn, .nav-btn, .action-btn) {
   background: var(--glass-btn);
   border: 1px solid var(--glass-rim);
   box-shadow: var(--glass-btn-shadow);
   border-radius: var(--radius-btn);
   transition: transform 0.08s ease, background 0.15s ease, box-shadow 0.15s ease;
 }
-:root[data-theme="glass"] :is(.keypad .k, .menu-btn, .user-tile, .pinpad .key, .btn, .nav-btn):hover:not(:disabled) {
+:root[data-theme="glass"] :is(.keypad .k, .menu-btn, .user-tile, .pinpad .key, .btn, .nav-btn, .action-btn):hover:not(:disabled) {
   background: var(--glass-btn-hover);
 }
 :root[data-theme="glass"] :is(.keypad .k, .menu-btn, .user-tile, .pinpad .key, .btn, .nav-btn, .total-button, .btn-primary):active:not(:disabled) {
@@ -88,7 +88,11 @@
 
 /* ---------- layout: floating panels with breathing room ---------- */
 :root[data-theme="glass"] .sale-screen { background: transparent; gap: 12px; padding: 12px; }
-:root[data-theme="glass"] .sale-header { height: 52px; }
+:root[data-theme="glass"] .sale-header { height: 68px; }
+:root[data-theme="glass"] .header-actions { border-color: var(--glass-rim); }
+:root[data-theme="glass"] .modal-backdrop { background: rgba(30, 41, 90, 0.18); -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); }
+:root[data-theme="glass"] .search-row { border-bottom-color: var(--glass-rim); }
+:root[data-theme="glass"] .search-row:hover { background: rgba(255, 255, 255, 0.4); }
 :root[data-theme="glass"] .left-col { gap: 12px; border-right: none; }
 :root[data-theme="glass"] .right-col { gap: 12px; }
 :root[data-theme="glass"] .dialog-panel { border-bottom: 1px solid var(--glass-rim); }

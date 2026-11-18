@@ -11,6 +11,9 @@ public interface PosTransactionRepository extends JpaRepository<PosTransaction, 
     Optional<PosTransaction> findFirstByStatusAndCreatedByAndCashSessionIdOrderByCreatedAtDesc(
         String status, UUID createdBy, UUID cashSessionId);
 
+    @Query(value = "SELECT nextval('pos_transaction_no_seq')", nativeQuery = true)
+    long nextTxnNo();
+
     /** Next gap-free receipt number for the business date (atomic upsert on receipt_counter). */
     @Query(value = """
         INSERT INTO receipt_counter (business_date, last_no) VALUES (:businessDate, 1)

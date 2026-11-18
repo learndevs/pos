@@ -16,6 +16,7 @@
 | D-013 | Decided | Backend data model is JPA entities per feature; `PosTransaction` is the aggregate root for basket items (JOINED inheritance). No JdbcTemplate in main code. |
 | D-014 | Decided | Menu grid is 4 rows x 3 columns per page (V5); right column split 50/50 keypad / menu. |
 | D-015 | Decided | Themes are swappable visual layers over one layout: Default (white), Dark, Liquid Glass. Chosen per terminal; Default recommended on low-end hardware. |
+| D-016 | Decided | Sale cycle: always an open transaction; tender -> drawer (cash only) -> wait for close -> receipt from the transaction via an HTML Mustache template -> next transaction. Hardware is tested with Electron test windows (drawer, printer PDF). |
 | D-006 | Open | Recipe-level stock deduction in v1 or v1.1? Default: v1.1. |
 
 ## Log
@@ -26,3 +27,4 @@
 - 2026-11-18: Added ui/ and desktop/ projects, PIN sign-in with first-run owner setup (D-011).
 - 2026-11-19: Sale screen, action framework + ITEM menu, JPA refactor, 4x3 menu grid (D-012..D-014).
 - 2026-11-19: Theme system with Liquid Glass (D-015).
+- 2026-11-19: Sale cycle with drawer + receipt, test devices, product search, header actions (D-016).

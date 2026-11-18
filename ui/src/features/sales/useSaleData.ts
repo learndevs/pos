@@ -20,6 +20,7 @@ export function useSaleData() {
     session: session.data,
     sessionLoaded: session.isFetched,
     sale: sale.data ?? null,
+    saleLoaded: sale.isFetched,
     setSale: (s: Sale | null) => qc.setQueryData(SALE_KEY, s),
     refreshSession: () => qc.invalidateQueries({ queryKey: ["cash-session"] }),
     money,

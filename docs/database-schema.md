@@ -99,3 +99,7 @@ erDiagram
 | `menu_button` | Slot `(folder_id, page, grid_row 0-3, grid_col 0-2)` is unique; `action_type` PRODUCT / OPEN_FOLDER / TENDER / FUNCTION / SWITCH_MENU, and CHECKs make each type fill exactly its own column(s) |
 
 Behaviour of each button is defined in the UI action registry; see [sale-screen.md](sale-screen.md).
+
+## V6
+- `pos_transaction.txn_no`: sequence number shown from the moment a transaction starts (gaps allowed). `receipt_no` stays gap-free and is only set on completion.
+- `receipt_template`: Mustache HTML receipt layout, `paper_width_mm`, one `active` row. See [receipts.md](receipts.md).

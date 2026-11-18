@@ -9,6 +9,7 @@ Offline point-of-sale for a single-outlet restaurant on a legacy Windows PC (1 t
 - [docs/tech-spec.md](docs/tech-spec.md): architecture, stack, data model, scope, NFRs
 - [docs/database-schema.md](docs/database-schema.md): schema, ERD, integrity rules
 - [docs/sale-screen.md](docs/sale-screen.md): sale screen layout, menus, action framework
+- [docs/receipts.md](docs/receipts.md): receipt template placeholders and API
 - [docs/plan.md](docs/plan.md): phased delivery plan and risks
 - [docs/dev-setup.md](docs/dev-setup.md): local DB and server setup
 - [docs/decisions.md](docs/decisions.md): open questions and decision log (ADR-lite)
@@ -19,7 +20,7 @@ Offline point-of-sale for a single-outlet restaurant on a legacy Windows PC (1 t
 | `pos-domain` | Touching money, sales, stock, cash sessions, business date |
 | `pos-backend` | Working in `server/`: layout, DB connection, Flyway, run and test |
 | `pos-desktop` | Working in `desktop/` or `ui/` (Electron, JVM launcher, security) |
-| `pos-printing` | Receipts, kitchen tickets, cash drawer, ESC/POS |
+| `pos-printing` | Receipt template, test printer / drawer windows, ESC/POS later |
 | `pos-sale-actions` | Sale screen buttons, functions, menus, keypad behaviour |
 | `pos-docs` | Updating the docs or decision log |
 

@@ -1,10 +1,14 @@
 import { authApi } from "../../users/authApi";
+import { devices } from "../../../devices/devices";
 import { defineAction } from "./registry";
 import { msg } from "./types";
 
 defineAction({
   id: "OPEN_DRAWER",
-  run: () => [msg("info", "No cash drawer connected yet.")],
+  async run() {
+    await devices.openDrawer({});
+    return [msg("info", "Drawer closed")];
+  },
 });
 
 defineAction({

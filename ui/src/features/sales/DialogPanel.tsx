@@ -15,7 +15,7 @@ export function DialogPanel() {
   const noDay = sessionLoaded && !session;
   const prompt =
     noDay ? "Start the day: enter the opening float in the drawer, then press ENTER"
-    : ui.mode.kind === "INPUT" || ui.mode.kind === "CONFIRM" ? ui.mode.prompt
+    : ui.mode.kind === "INPUT" || ui.mode.kind === "CONFIRM" || ui.mode.kind === "BUSY" ? ui.mode.prompt
     : ui.menu === "TENDER" ? "Type an amount, then a tender. No amount = exact."
     : ui.menu === "ITEM" && selected ? `Line ${selected.lineNo} selected: ${selected.name ?? selected.tenderMethod}. Choose an action, or Done.`
     : "Type a quantity, then a product";
@@ -40,7 +40,7 @@ export function DialogPanel() {
   return (
     <section className="dialog-panel">
       <div className="readout">
-        <div className={`prompt ${noDay ? "warn" : ""}`}>{prompt}</div>
+        <div className={`prompt ${noDay ? "warn" : ""} ${ui.mode.kind === "BUSY" ? "busy" : ""}`}>{prompt}</div>
         <div className="display" aria-live="polite">{display || <span className="placeholder">0</span>}</div>
         <div className={`message ${ui.message?.tone ?? ""}`} role="status">{ui.message?.text ?? "\u00a0"}</div>
       </div>

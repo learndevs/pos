@@ -1,4 +1,4 @@
-import { api, post } from "../../api/client";
+import { api, apiText, post } from "../../api/client";
 
 export type MenuCode = "SALE" | "TENDER" | "ITEM";
 export type ActionType = "PRODUCT" | "OPEN_FOLDER" | "TENDER" | "FUNCTION" | "SWITCH_MENU";
@@ -47,6 +47,7 @@ export interface SaleLine {
 
 export interface Sale {
   id: string;
+  txnNo: number;
   status: "OPEN" | "COMPLETED" | "CANCELLED";
   orderType: "DINE_IN" | "TAKEAWAY";
   receiptNo: string | null;
@@ -58,6 +59,16 @@ export interface Sale {
   paidMinor: number;
   dueMinor: number;
   changeMinor: number;
+  cashTendered: boolean;
+}
+
+export interface ProductHit {
+  id: string;
+  name: string;
+  priceMinor: number;
+  category: string;
+  sku: string | null;
+  barcode: string | null;
 }
 
 export interface CashSession {
@@ -88,4 +99,6 @@ export const saleApi = {
   tender: (id: string, method: string, amountMinor: number | null) =>
     post<Sale>(`/api/sales/${id}/tenders`, amountMinor == null ? { method } : { method, amountMinor }),
   cancel: (id: string, reason: string) => post<Sale>(`/api/sales/${id}/cancel`, { reason }),
+  receiptHtml: (id: string) => apiText(`/api/receipts/${id}`),
+  searchProducts: (q: string) => api<ProductHit[]>(`/api/products/search?q=${encodeURIComponent(q)}`),
 };

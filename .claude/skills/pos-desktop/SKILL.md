@@ -14,6 +14,8 @@ description: Electron shell and React UI conventions: spawning the bundled JRE, 
 - The server serves the built UI same-origin (no CORS); in dev, Vite on :5173 proxies `/api` to :8080.
 - Run: `npm run dev` from the repo root (server + Vite + Electron). `npm run smoke -w desktop` starts the jar, checks health and quits. Always launch Electron via `scripts/run-electron.cjs`: VS Code exports `ELECTRON_RUN_AS_NODE=1`, which breaks Electron.
 - Install deps with npm 11 (`npx npm@11 install`); npm 10.9 crashes resolving vitest's optional peers.
+- IPC surface (preload -> main): `pos:config`, `pos:drawer:open` (resolves on close), `pos:printer:print` (HTML -> PDF path). Keep it this small; new devices get their own channel and a typed method in `ui/src/types/pos-bridge.d.ts`.
+- Header: business / day / `Txn #` on the left, scrollable action panel (Product search, CRM, Admin) in the middle, theme / user / clock on the right. CRM and Admin are placeholders.
 - Packaging: electron-builder NSIS, per-machine install, code-signed, bundle JRE and jar as `extraResources`. Data lives in `%APPDATA%`, never the install dir.
 
 **UI (ui/)**

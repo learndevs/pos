@@ -2,6 +2,8 @@ import { app, BrowserWindow, dialog, ipcMain, shell } from "electron";
 import path from "node:path";
 import { Backend, startBackend } from "./backend";
 import { logDir } from "./paths";
+import { openTestDrawer } from "./devices/testDrawer";
+import { printToTestPrinter } from "./devices/testPrinter";
 
 const smoke = process.argv.includes("--smoke");   // start server, check health, quit (CI / install check)
 const devUiUrl = process.env.POS_DEV ? (process.env.POS_UI_URL ?? "http://localhost:5173") : undefined;
@@ -57,6 +59,12 @@ async function boot(): Promise<void> {
   }
 
   ipcMain.handle("pos:config", () => ({ apiToken: backend!.token, version: app.getVersion() }));
+
+  // Devices. Only test devices exist so far (real ESC/POS printer + drawer kick come later).
+  ipcMain.handle("pos:drawer:open", (_e, info: { changeText?: string; totalText?: string }) =>
+    openTestDrawer(info ?? {}, win));
+  ipcMain.handle("pos:printer:print", (_e, req: { html: string; name: string; paperWidthMm?: number }) =>
+    printToTestPrinter(String(req.html), String(req.name), req.paperWidthMm));
 
   win = new BrowserWindow({
     width: 1280,

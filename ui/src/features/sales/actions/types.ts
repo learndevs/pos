@@ -12,7 +12,8 @@ export type PosEvent =
   | { type: "button"; button: MenuButton }
   | { type: "enter" }
   | { type: "total" }
-  | { type: "line"; lineId: string };
+  | { type: "line"; lineId: string }
+  | { type: "product"; productId: string };           // e.g. picked from product search
 
 /** What an action can see. Actions never touch stores directly; they return Effects. */
 export interface ActionContext {
@@ -21,6 +22,7 @@ export interface ActionContext {
   sale: Sale | null;            // the OPEN sale, if any
   line: SaleLine | null;        // the selected basket line, if any
   lineId?: string;              // for "line" events
+  productId?: string;           // for "product" events
   menu: MenuCode;
   user: SessionUser;
   dayOpen: boolean;
@@ -37,6 +39,7 @@ export type Effect =
   | { type: "select"; lineId?: string }
   | { type: "message"; tone: "info" | "success" | "error"; text: string }
   | { type: "refreshDay" }
+  | { type: "finishSale"; sale: Sale }   // drawer -> wait for close -> receipt -> new transaction
   | { type: "signOut" };
 
 export interface ActionDef {

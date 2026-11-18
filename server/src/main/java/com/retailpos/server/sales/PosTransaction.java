@@ -38,6 +38,10 @@ public class PosTransaction extends BaseEntity {
     @Column(name = "business_date", nullable = false, updatable = false)
     private LocalDate businessDate;
 
+    /** Shown in the header from the start (gaps allowed). Receipt numbers are separate and gap-free. */
+    @Column(name = "txn_no", nullable = false, updatable = false)
+    private long txnNo;
+
     @Column(name = "receipt_no")
     private String receiptNo;
 
@@ -80,8 +84,9 @@ public class PosTransaction extends BaseEntity {
         super(newRow);
     }
 
-    public static PosTransaction startSale(UUID cashSessionId, LocalDate businessDate, UUID userId, Instant now) {
+    public static PosTransaction startSale(long txnNo, UUID cashSessionId, LocalDate businessDate, UUID userId, Instant now) {
         PosTransaction t = new PosTransaction(true);
+        t.txnNo = txnNo;
         t.type = "SALE";
         t.status = OPEN;
         t.cashSessionId = cashSessionId;
@@ -180,6 +185,14 @@ public class PosTransaction extends BaseEntity {
             .mapToLong(i -> ((TenderItem) i).getChangeMinor()).sum();
     }
 
+    public List<TenderItem> tenderItems() {
+        return items.stream().filter(TenderItem.class::isInstance).map(TenderItem.class::cast).toList();
+    }
+
+    public boolean hasCashTender() {
+        return tenderItems().stream().anyMatch(t -> t.getMethod() == TenderItem.Method.CASH);
+    }
+
     public List<SaleItem> saleItems() {
         return items.stream().filter(SaleItem.class::isInstance).map(SaleItem.class::cast).toList();
     }
@@ -203,6 +216,8 @@ public class PosTransaction extends BaseEntity {
         if (!OPEN.equals(status)) throw PosException.conflict("This sale is already " + status.toLowerCase() + ".");
     }
 
+    public long getTxnNo() { return txnNo; }
+    public Instant getCompletedAt() { return completedAt; }
     public String getType() { return type; }
     public String getStatus() { return status; }
     public UUID getCashSessionId() { return cashSessionId; }

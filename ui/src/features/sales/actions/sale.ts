@@ -5,9 +5,9 @@ import { msg } from "./types";
 
 defineAction({
   id: "PRODUCT",
-  async run({ button, input, ensureSale, api }) {
+  async run({ button, productId, input, ensureSale, api }) {
     const sale = await ensureSale();
-    const after = await api.addItem(sale.id, button!.productId!, input ?? 1);
+    const after = await api.addItem(sale.id, productId ?? button!.productId!, input ?? 1);
     return [{ type: "sale", sale: after }];
   },
 });
@@ -27,7 +27,8 @@ defineAction({
   confirm: () => "Cancel the whole sale?",
   async run({ sale, api }) {
     await api.cancel(sale!.id, "Cancelled at till");
-    return [{ type: "sale", sale: null }, { type: "menu", menu: "SALE" }, msg("info", "Sale cancelled")];
+    // a new empty transaction starts automatically (useAutoTransaction)
+    return [{ type: "sale", sale: null }, { type: "menu", menu: "SALE" }, msg("info", `Transaction #${sale!.txnNo} cancelled`)];
   },
 });
 

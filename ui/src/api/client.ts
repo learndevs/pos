@@ -19,8 +19,18 @@ export class ApiError extends Error {
 }
 
 export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
+  const res = await request(path, init, "application/json");
+  return (res.status === 204 ? undefined : await res.json()) as T;
+}
+
+/** For endpoints that return text (e.g. receipt HTML). */
+export async function apiText(path: string, init: RequestInit = {}): Promise<string> {
+  return (await request(path, init, "text/html")).text();
+}
+
+async function request(path: string, init: RequestInit, accept: string): Promise<Response> {
   const headers = new Headers(init.headers);
-  headers.set("Accept", "application/json");
+  headers.set("Accept", accept);
   if (init.body && !headers.has("Content-Type")) headers.set("Content-Type", "application/json");
   const lt = await launchToken();
   if (lt) headers.set("X-POS-Launch-Token", lt);
@@ -38,7 +48,7 @@ export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
     if (res.status === 401 && session) useAuth.getState().signOut(); // session expired
     throw new ApiError(res.status, problem?.detail ?? `Request failed (${res.status})`);
   }
-  return (res.status === 204 ? undefined : await res.json()) as T;
+  return res;
 }
 
 export const post = <T>(path: string, body: unknown) => api<T>(path, { method: "POST", body: JSON.stringify(body) });
