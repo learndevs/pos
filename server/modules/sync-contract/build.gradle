@@ -3,4 +3,5 @@
 dependencies {
 	api project(':platform')
 	api project(':modules:catalog')
+	api project(':modules:menu')
 }

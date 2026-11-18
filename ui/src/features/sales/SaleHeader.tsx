@@ -4,6 +4,7 @@ import { ThemePicker } from "../../app/ThemePicker";
 import { authApi } from "../users/authApi";
 import { HeaderActions } from "./HeaderActions";
 import { SyncChip } from "./SyncChip";
+import { useDevice, useDevicePanel } from "./DevicePanel";
 import { useSaleData } from "./useSaleData";
 
 export function SaleHeader() {
@@ -16,11 +17,20 @@ export function SaleHeader() {
   }, []);
 
   const open = sale?.status === "OPEN" ? sale : null;
+  const device = useDevice().data;
+  const openDevice = useDevicePanel((s) => s.open);
 
   return (
     <header className="sale-header">
       <div className="hdr-left">
-        <strong className="biz">{business?.name ?? "POS"}</strong>
+        <div className="biz-row">
+          <strong className="biz">{business?.name ?? "POS"}</strong>
+          {device && (
+            <button type="button" className="till-badge" onClick={openDevice} title="This till">
+              {device.code}{device.name ? <span className="muted"> · {device.name}</span> : null}
+            </button>
+          )}
+        </div>
         <div className="hdr-meta">
           <span className={session ? "chip ok" : "chip warn"}>{session ? `Day ${session.businessDate}` : "Day not started"}</span>
           {open && (

@@ -7,6 +7,11 @@ import com.retailpos.server.catalog.ProductRepository;
 import com.retailpos.server.catalog.TaxRate;
 import com.retailpos.server.catalog.TaxRateRepository;
 import com.retailpos.server.common.PosException;
+import com.retailpos.server.menu.MenuButton;
+import com.retailpos.server.menu.MenuButtonRepository;
+import com.retailpos.server.menu.MenuFolder;
+import com.retailpos.server.menu.MenuFolderRepository;
+import com.retailpos.server.sync.contract.MenuMapper;
 import com.retailpos.server.sync.contract.CatalogMapper;
 import com.retailpos.server.sync.contract.Contract;
 import com.retailpos.server.sync.contract.Contract.Entity;
@@ -60,12 +65,14 @@ public class PackageService {
     private final TaxRateRepository taxRates;
     private final CategoryRepository categories;
     private final ProductRepository products;
+    private final MenuFolderRepository folders;
+    private final MenuButtonRepository buttons;
     private final ObjectMapper json;
     private final Clock clock;
 
     PackageService(ConfigPackageRepository packages, PackageTargetRepository targets, ChangeLog changeLog, Terminals terminals,
                    TaxRateRepository taxRates, CategoryRepository categories, ProductRepository products,
-                   ObjectMapper json, Clock clock) {
+                   MenuFolderRepository folders, MenuButtonRepository buttons, ObjectMapper json, Clock clock) {
         this.packages = packages;
         this.targets = targets;
         this.changeLog = changeLog;
@@ -73,6 +80,8 @@ public class PackageService {
         this.taxRates = taxRates;
         this.categories = categories;
         this.products = products;
+        this.folders = folders;
+        this.buttons = buttons;
         this.json = json;
         this.clock = clock;
     }
@@ -100,6 +109,8 @@ public class PackageService {
         counts.put(Entity.TAX_RATE.name(), content.taxRates().size());
         counts.put(Entity.CATEGORY.name(), content.categories().size());
         counts.put(Entity.PRODUCT.name(), content.products().size());
+        counts.put(Entity.MENU_FOLDER.name(), content.menuFolders().size());
+        counts.put(Entity.MENU_BUTTON.name(), content.menuButtons().size());
         Manifest manifest = new Manifest(Contract.CONTRACT_VERSION, no, now, req.scope().name(), req.dateFrom(), req.dateTo(),
             entities, counts, Map.of(), blankToNull(req.note()));
         byte[] zip = PackageZip.write(json, manifest, content);
@@ -126,6 +137,53 @@ public class PackageService {
     @Transactional(readOnly = true)
     public List<Object[]> lastApplied(UUID terminalId) {
         return targets.lastApplied(terminalId);
+    }
+
+    // ---------- dashboard: broadcast per entity ----------
+
+    /** Entity groups as shown on the dashboard (menus = folders + buttons). */
+    public enum Group {
+        TAX_RATES("Tax rates", Set.of(Entity.TAX_RATE)),
+        CATEGORIES("Categories", Set.of(Entity.CATEGORY)),
+        PRODUCTS("Products", Set.of(Entity.PRODUCT)),
+        MENUS("Menus", Set.of(Entity.MENU_FOLDER, Entity.MENU_BUTTON));
+
+        public final String label;
+        public final Set<Entity> entities;
+        Group(String label, Set<Entity> entities) { this.label = label; this.entities = entities; }
+    }
+
+    public record GroupStatus(Group group, String label, long pendingChanges, Integer lastPackageNo, Instant lastPackageAt) {}
+
+    @Transactional(readOnly = true)
+    public List<GroupStatus> overview() {
+        return Arrays.stream(Group.values()).map(g -> {
+            var last = lastPackageFor(g);
+            Instant since = last == null ? Instant.EPOCH : last.getCreatedAt();
+            long pending = changeLog.countSince(g.entities, since);
+            return new GroupStatus(g, g.label, pending, last == null ? null : last.getPackageNo(), last == null ? null : last.getCreatedAt());
+        }).toList();
+    }
+
+    /**
+     * Broadcast one entity group: changes since its last package (by date; re-sending a few is harmless),
+     * or everything if it was never sent.
+     */
+    public PackageView broadcast(Group group, List<UUID> terminalIds, UUID adminUserId) {
+        var last = lastPackageFor(group);
+        ZoneId zone = ZoneId.systemDefault();
+        LocalDate today = LocalDate.now(clock.withZone(zone));
+        if (last == null) {
+            return build(new BuildRequest(group.entities, Scope.FULL, null, null, terminalIds, group.label + " (first broadcast)"), adminUserId);
+        }
+        if (changeLog.countSince(group.entities, last.getCreatedAt()) == 0) throw PosException.badRequest(group.label + ": nothing changed since package #" + last.getPackageNo() + ".");
+        LocalDate from = last.getCreatedAt().atZone(zone).toLocalDate();
+        return build(new BuildRequest(group.entities, Scope.DATE_RANGE, from, today, terminalIds, group.label + " changes"), adminUserId);
+    }
+
+    private ConfigPackage lastPackageFor(Group g) {
+        return g.entities.stream().map(e -> packages.lastWith(e.name()).orElse(null)).filter(java.util.Objects::nonNull)
+            .max(Comparator.comparing(ConfigPackage::getPackageNo)).orElse(null);
     }
 
     // ---------- tills ----------
@@ -159,26 +217,46 @@ public class PackageService {
     /** Selected records (latest version) + everything they reference, so a till never gets a dangling reference. */
     private PackageContent collect(BuildRequest req) {
         Set<UUID> taxIds = new LinkedHashSet<>(), catIds = new LinkedHashSet<>(), productIds = new LinkedHashSet<>();
+        Set<UUID> folderIds = new LinkedHashSet<>(), buttonIds = new LinkedHashSet<>();
         boolean full = req.scope() == Scope.FULL;
         ZoneId zone = ZoneId.systemDefault();
         Instant from = full ? null : req.dateFrom().atStartOfDay(zone).toInstant();
         Instant to = full ? null : req.dateTo().plusDays(1).atStartOfDay(zone).toInstant();
-        if (req.entities().contains(Entity.TAX_RATE))
-            taxIds.addAll(full ? taxRates.findAll().stream().map(TaxRate::getId).toList() : changeLog.changedIds(Entity.TAX_RATE, from, to));
-        if (req.entities().contains(Entity.CATEGORY))
-            catIds.addAll(full ? categories.findAll().stream().map(Category::getId).toList() : changeLog.changedIds(Entity.CATEGORY, from, to));
-        if (req.entities().contains(Entity.PRODUCT))
-            productIds.addAll(full ? products.findAll().stream().map(Product::getId).toList() : changeLog.changedIds(Entity.PRODUCT, from, to));
+        var e = req.entities();
+        if (e.contains(Entity.TAX_RATE)) taxIds.addAll(full ? taxRates.findAll().stream().map(TaxRate::getId).toList() : changeLog.changedIds(Entity.TAX_RATE, from, to));
+        if (e.contains(Entity.CATEGORY)) catIds.addAll(full ? categories.findAll().stream().map(Category::getId).toList() : changeLog.changedIds(Entity.CATEGORY, from, to));
+        if (e.contains(Entity.PRODUCT)) productIds.addAll(full ? products.findAll().stream().map(Product::getId).toList() : changeLog.changedIds(Entity.PRODUCT, from, to));
+        if (e.contains(Entity.MENU_FOLDER)) folderIds.addAll(full ? folders.findAll().stream().filter(f -> !f.isRoot()).map(MenuFolder::getId).toList() : changeLog.changedIds(Entity.MENU_FOLDER, from, to));
+        if (e.contains(Entity.MENU_BUTTON)) buttonIds.addAll(full ? buttons.findAll().stream().map(MenuButton::getId).toList() : changeLog.changedIds(Entity.MENU_BUTTON, from, to));
 
+        // references: buttons -> their folder, target folder, product; folders -> parent chain (roots exist everywhere)
+        List<MenuButton> btns = buttons.findAllById(buttonIds);
+        for (MenuButton b : btns) {
+            folderIds.add(b.getFolderId());
+            if (b.getTargetFolderId() != null) folderIds.add(b.getTargetFolderId());
+            if (b.getProductId() != null) productIds.add(b.getProductId());
+        }
+        Map<UUID, MenuFolder> fs = new LinkedHashMap<>();
+        java.util.Deque<UUID> todo = new java.util.ArrayDeque<>(folderIds);
+        while (!todo.isEmpty()) {
+            UUID id = todo.pop();
+            if (fs.containsKey(id)) continue;
+            folders.findById(id).filter(f -> !f.isRoot()).ifPresent(f -> {
+                fs.put(f.getId(), f);
+                todo.push(f.getParentFolderId());
+            });
+        }
         List<Product> prods = products.findAllById(productIds);
-        for (Product p : prods) {                                   // auto-include references
+        for (Product p : prods) {
             catIds.add(p.getCategory().getId());
             if (p.getTaxRate() != null) taxIds.add(p.getTaxRate().getId());
         }
         return new PackageContent(
             taxRates.findAllById(taxIds).stream().sorted(Comparator.comparing(TaxRate::getName)).map(CatalogMapper::toV1).toList(),
             categories.findAllById(catIds).stream().sorted(Comparator.comparing(Category::getName)).map(CatalogMapper::toV1).toList(),
-            prods.stream().sorted(Comparator.comparing(Product::getName)).map(CatalogMapper::toV1).toList());
+            prods.stream().sorted(Comparator.comparing(Product::getName)).map(CatalogMapper::toV1).toList(),
+            fs.values().stream().map(MenuMapper::toV1).toList(),
+            btns.stream().map(MenuMapper::toV1).toList());
     }
 
     private List<String> gapWarnings(List<Terminal> tills, LocalDate from) {

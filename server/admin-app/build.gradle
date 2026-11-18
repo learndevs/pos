@@ -8,6 +8,7 @@ dependencies {
 	implementation project(':platform')
 	implementation project(':modules:master-schema')
 	implementation project(':modules:catalog')
+	implementation project(':modules:menu')
 	implementation project(':modules:sync-contract')
 	implementation project(':modules:sync-server')
 

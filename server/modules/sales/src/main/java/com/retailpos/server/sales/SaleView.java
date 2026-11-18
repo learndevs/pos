@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.UUID;
 
 /** Everything the sale screen shows for one transaction. Money in minor units. */
-public record SaleView(UUID id, long txnNo, String status, String orderType, String receiptNo, LocalDate businessDate,
+public record SaleView(UUID id, long txnNo, String deviceCode, String status, String orderType, String receiptNo, LocalDate businessDate,
                        List<Line> lines, long subtotalMinor, long taxMinor, long totalMinor,
                        long paidMinor, long dueMinor, long changeMinor, boolean cashTendered) {
 
@@ -26,7 +26,7 @@ public record SaleView(UUID id, long txnNo, String status, String orderType, Str
                 tn.getMethod().name(), tn.getTenderedMinor(), tn.getChangeMinor());
             default -> throw new IllegalStateException("Unknown basket item " + i.getClass());
         }).toList();
-        return new SaleView(t.getId(), t.getTxnNo(), t.getStatus(), t.getOrderType(), t.getReceiptNo(), t.getBusinessDate(), lines,
+        return new SaleView(t.getId(), t.getTxnNo(), t.getDeviceCode(), t.getStatus(), t.getOrderType(), t.getReceiptNo(), t.getBusinessDate(), lines,
             t.getSubtotalMinor(), t.getTaxMinor(), t.getTotalMinor(), t.paidMinor(), t.dueMinor(), t.changeMinor(),
             t.hasCashTender());
     }

@@ -33,7 +33,7 @@ public class MenuService {
     private final PosFunctionRepository functions;
     private final ProductRepository products;
 
-    MenuService(MenuRepository menus, MenuFolderRepository folders, MenuButtonRepository buttons,
+    public MenuService(MenuRepository menus, MenuFolderRepository folders, MenuButtonRepository buttons,
                 PosFunctionRepository functions, ProductRepository products) {
         this.menus = menus;
         this.folders = folders;
@@ -44,7 +44,7 @@ public class MenuService {
 
     /** The whole configuration in one go (small): menus, folder tree, active buttons with resolved details. */
     public MenuConfig config() {
-        List<MenuFolder> allFolders = folders.findAll();
+        List<MenuFolder> allFolders = folders.findByActiveTrue();
         Map<UUID, Menu> menuById = menus.findAll().stream().collect(Collectors.toMap(Menu::getId, Function.identity()));
         Map<String, PosFunction> fnByCode = functions.findAll().stream().collect(Collectors.toMap(PosFunction::getCode, Function.identity()));
         List<MenuButton> active = buttons.findByActiveTrueOrderByFolderIdAscPageAscGridRowAscGridColAsc();

@@ -45,6 +45,10 @@ public class PosTransaction extends BaseEntity {
     @Column(name = "receipt_no")
     private String receiptNo;
 
+    /** The till that rang the sale (device code, e.g. T01). */
+    @Column(name = "device_code", updatable = false)
+    private String deviceCode;
+
     @Column(name = "order_type", nullable = false)
     private String orderType;            // DINE_IN | TAKEAWAY
 
@@ -84,9 +88,10 @@ public class PosTransaction extends BaseEntity {
         super(newRow);
     }
 
-    public static PosTransaction startSale(long txnNo, UUID cashSessionId, LocalDate businessDate, UUID userId, Instant now) {
+    public static PosTransaction startSale(long txnNo, String deviceCode, UUID cashSessionId, LocalDate businessDate, UUID userId, Instant now) {
         PosTransaction t = new PosTransaction(true);
         t.txnNo = txnNo;
+        t.deviceCode = deviceCode;
         t.type = "SALE";
         t.status = OPEN;
         t.cashSessionId = cashSessionId;
@@ -226,6 +231,7 @@ public class PosTransaction extends BaseEntity {
     }
 
     public long getTxnNo() { return txnNo; }
+    public String getDeviceCode() { return deviceCode; }
     public Instant getCreatedAt() { return createdAt; }
     public Instant getCancelledAt() { return cancelledAt; }
     public String getReason() { return reason; }

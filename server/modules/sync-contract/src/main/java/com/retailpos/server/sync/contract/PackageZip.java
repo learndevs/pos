@@ -34,6 +34,8 @@ public final class PackageZip {
     public static final String TAX_RATES = "tax_rates.json";
     public static final String CATEGORIES = "categories.json";
     public static final String PRODUCTS = "products.json";
+    public static final String MENU_FOLDERS = "menu_folders.json";
+    public static final String MENU_BUTTONS = "menu_buttons.json";
     private static final long MAX_ENTRY_BYTES = 50L * 1024 * 1024;   // guard against zip bombs
 
     public record Read(Manifest manifest, PackageContent content) {}
@@ -46,6 +48,8 @@ public final class PackageZip {
         files.put(TAX_RATES, json.writeValueAsBytes(content.taxRates()));
         files.put(CATEGORIES, json.writeValueAsBytes(content.categories()));
         files.put(PRODUCTS, json.writeValueAsBytes(content.products()));
+        files.put(MENU_FOLDERS, json.writeValueAsBytes(content.menuFolders()));
+        files.put(MENU_BUTTONS, json.writeValueAsBytes(content.menuButtons()));
         Map<String, String> sums = new LinkedHashMap<>();
         files.forEach((name, bytes) -> sums.put(name, sha256(bytes)));
         Manifest m = new Manifest(manifest.contractVersion(), manifest.packageNo(), manifest.createdAt(), manifest.scope(),
@@ -89,7 +93,9 @@ public final class PackageZip {
         PackageContent content = new PackageContent(
             list(json, files.get(TAX_RATES), new TypeReference<List<TaxRateV1>>() {}),
             list(json, files.get(CATEGORIES), new TypeReference<List<CategoryV1>>() {}),
-            list(json, files.get(PRODUCTS), new TypeReference<List<ProductV1>>() {}));
+            list(json, files.get(PRODUCTS), new TypeReference<List<ProductV1>>() {}),
+            list(json, files.get(MENU_FOLDERS), new TypeReference<List<Contract.MenuFolderV1>>() {}),     // absent in older packages = empty
+            list(json, files.get(MENU_BUTTONS), new TypeReference<List<Contract.MenuButtonV1>>() {}));
         return new Read(m, content);
     }
 

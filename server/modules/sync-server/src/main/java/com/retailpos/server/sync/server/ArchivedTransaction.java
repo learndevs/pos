@@ -22,6 +22,7 @@ public class ArchivedTransaction {
     @Column(nullable = false) private String status;
     @Column(name = "business_date", nullable = false) private LocalDate businessDate;
     @Column(name = "total_minor", nullable = false) private long totalMinor;
+    @Column(name = "device_code") private String deviceCode;
     @Column(name = "finished_at") private Instant finishedAt;
     @Column(name = "received_at", nullable = false) private Instant receivedAt;
     @JdbcTypeCode(SqlTypes.JSON)
@@ -36,6 +37,7 @@ public class ArchivedTransaction {
     public String getStatus() { return status; }
     public LocalDate getBusinessDate() { return businessDate; }
     public long getTotalMinor() { return totalMinor; }
+    public String getDeviceCode() { return deviceCode; }
     public Instant getFinishedAt() { return finishedAt; }
     public Instant getReceivedAt() { return receivedAt; }
     public String getPayload() { return payload; }

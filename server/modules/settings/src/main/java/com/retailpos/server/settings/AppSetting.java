@@ -25,6 +25,17 @@ public class AppSetting {
 
     protected AppSetting() {}
 
+    AppSetting(String key, String value, Instant now) {
+        this.key = key;
+        this.value = value;
+        this.updatedAt = now;
+    }
+
+    void setValue(String value, Instant now) {
+        this.value = value;
+        this.updatedAt = now;
+    }
+
     public String getKey() { return key; }
     public String getValue() { return value; }
 }

@@ -31,6 +31,7 @@ sequenceDiagram
 - Offline till: download the zip in admin, `POST /api/sync/import` on the till (SETTINGS_MANAGE).
 
 ## Data
+Menus: `menu_folder` (+ `active`), `menu_button` (slot unique among active buttons), shared via `db/master` V13.
 POS: `sync_state` (V10/V12), `txn_outbox` (V12). Admin: `admin_user`, `config_change`, `terminal` (V9),
 `config_package`, `package_target`, `transaction_archive` (V11). Shared: master tables (V8 `db/master`).
 
@@ -45,7 +46,14 @@ POS: `sync_state` (V10/V12), `txn_outbox` (V12). Admin: `admin_user`, `config_ch
 | POS | GET | `/api/sync/status`; POST `/api/sync/now`, `/api/sync/import` | session |
 
 ## UI
-admin-ui: Products, Categories, Tax rates, Packages, Terminals, Transactions. POS header: sync chip (tap = sync now).
+admin-ui shell: categorised side nav (Overview, Catalog, Till layout, Sync, Reports) + header with feature search.
+- Dashboard: one card per entity (Tax rates, Categories, Products, Menus): pending changes, last broadcast, Broadcast
+  (changes since its last package, or everything the first time) + Broadcast all changes; target till chips.
+- Products / Categories / Tax rates: list + tabbed inspector; View / Edit / Delete icons (delete = deactivate).
+- Menus: Sale / Tender / Item tabs, folder tree (add / rename / remove), page tabs, 4 x 3 grid, button inspector
+  (Action: product / folder / tender / function / switch menu; Label & look).
+- Packages: New package (entities, date range or snapshot, tills) / History tabs. Terminals, Transactions.
+POS header: sync chip (tap = sync now).
 
 ## Tests
 `admin-app/AdminSyncFlowTest` (package round trip, auto-included references, ack, idempotent archive),

@@ -32,6 +32,11 @@ public class ChangeLog {
     }
 
     @Transactional(readOnly = true)
+    long countSince(java.util.Set<Contract.Entity> entities, Instant after) {
+        return changes.countByEntityInAndCreatedAtAfter(entities, after);
+    }
+
+    @Transactional(readOnly = true)
     List<UUID> changedIds(Contract.Entity entity, Instant from, Instant toExclusive) {
         return changes.changedIds(entity, from, toExclusive);
     }

@@ -74,6 +74,21 @@ class AdminSyncFlowTest {
             .contentType(MediaType.APPLICATION_JSON).content("{\"name\":\"Till 2\"}"))), "$.token");
         String till2Id = JsonPath.read(body(mvc.perform(get("/admin/api/terminals").header("Authorization", auth))), "$[1].id");
 
+        // independent tills: codes are assigned in order, the till can ask who it is; codes stay unique
+        mvc.perform(get("/admin/api/terminals").header("Authorization", auth)).andExpect(jsonPath("$[0].code").value("T01")).andExpect(jsonPath("$[1].code").value("T02"));
+        mvc.perform(get("/sync/v1/me").header("Authorization", "Bearer " + token)).andExpect(jsonPath("$.code").value("T02")).andExpect(jsonPath("$.tillNo").value(2)).andExpect(jsonPath("$.name").value("Till 2"));
+        mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put("/admin/api/terminals/" + till2Id).header("Authorization", auth)
+            .contentType(MediaType.APPLICATION_JSON).content("{\"tillNo\":2,\"name\":\"Bar\",\"code\":\"T01\"}")).andExpect(status().isConflict());
+        mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put("/admin/api/terminals/" + till2Id).header("Authorization", auth)
+            .contentType(MediaType.APPLICATION_JSON).content("{\"tillNo\":2,\"name\":\"Bar\",\"code\":\"bar1\",\"location\":\"Upstairs\"}")).andExpect(jsonPath("$.code").value("BAR1"));
+        mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put("/admin/api/terminals/" + till2Id).header("Authorization", auth)
+            .contentType(MediaType.APPLICATION_JSON).content("{\"tillNo\":1,\"name\":\"Bar\",\"code\":\"BAR1\"}")).andExpect(status().isConflict());   // till no. taken
+        mvc.perform(get("/admin/api/terminals/next").header("Authorization", auth)).andExpect(jsonPath("$.tillNo").value(3)).andExpect(jsonPath("$.code").value("T03"));
+        String newToken = JsonPath.read(body(mvc.perform(post("/admin/api/terminals/" + till2Id + "/token").header("Authorization", auth))), "$.token");
+        mvc.perform(get("/sync/v1/me").header("Authorization", "Bearer " + token)).andExpect(status().isForbidden());   // old token revoked
+        token = newToken;
+        mvc.perform(get("/sync/v1/me").header("Authorization", "Bearer " + token)).andExpect(jsonPath("$.code").value("BAR1"));
+
         // products only, today: the category is added automatically; only Till 2 is targeted
         String today = LocalDate.now().toString();
         String pkg = body(mvc.perform(post("/admin/api/packages").header("Authorization", auth).contentType(MediaType.APPLICATION_JSON)
@@ -104,6 +119,35 @@ class AdminSyncFlowTest {
         mvc.perform(post("/sync/v1/transactions").header("Authorization", "Bearer " + token).contentType(MediaType.APPLICATION_JSON).content(txn))
             .andExpect(jsonPath("$.stored").value(0));                                 // idempotent
         mvc.perform(get("/admin/api/transactions?q=0007").header("Authorization", auth)).andExpect(jsonPath("$[0].txnNo").value(7));
+
+        // menus: add a folder + a product button in it, then broadcast the Menus group from the dashboard
+        String saleRoot = "00000000-0000-7000-8000-0000000b0001";
+        String folderId = JsonPath.read(body(mvc.perform(post("/admin/api/menu-folders").header("Authorization", auth).contentType(MediaType.APPLICATION_JSON)
+            .content("{\"parentFolderId\":\"" + saleRoot + "\",\"name\":\"Specials\"}")).andExpect(status().isOk())), "$.id");
+        String productId = JsonPath.read(body(mvc.perform(get("/admin/api/products").header("Authorization", auth))), "$[0].id");
+        String button = "{\"folderId\":\"" + folderId + "\",\"page\":0,\"gridRow\":0,\"gridCol\":0,\"label\":\"Burger\",\"actionType\":\"PRODUCT\",\"productId\":\"" + productId + "\"}";
+        mvc.perform(post("/admin/api/menu-buttons").header("Authorization", auth).contentType(MediaType.APPLICATION_JSON).content(button)).andExpect(status().isOk());
+        mvc.perform(post("/admin/api/menu-buttons").header("Authorization", auth).contentType(MediaType.APPLICATION_JSON).content(button))
+            .andExpect(status().isConflict());                                       // slot taken
+        mvc.perform(get("/admin/api/sync/overview").header("Authorization", auth)).andExpect(jsonPath("$[3].group").value("MENUS"))
+            .andExpect(jsonPath("$[3].pendingChanges").value(2));
+        String menuPkg = body(mvc.perform(post("/admin/api/sync/broadcast").header("Authorization", auth).contentType(MediaType.APPLICATION_JSON)
+            .content("{\"group\":\"MENUS\",\"terminalIds\":[\"" + till2Id + "\"]}")).andExpect(status().isOk()));
+        assertThat((Integer) JsonPath.read(menuPkg, "$.counts.MENU_FOLDER")).isEqualTo(1);
+        assertThat((String) JsonPath.read(menuPkg, "$.scope")).isEqualTo("FULL");                  // first broadcast of a group = everything
+        assertThat((Integer) JsonPath.read(menuPkg, "$.counts.MENU_BUTTON")).isEqualTo(21);       // 20 seeded + the new one
+        assertThat((Integer) JsonPath.read(menuPkg, "$.counts.PRODUCT")).isEqualTo(1);            // referenced product included
+        mvc.perform(get("/admin/api/sync/overview").header("Authorization", auth)).andExpect(jsonPath("$[3].pendingChanges").value(0));
+
+        // delete = deactivate + broadcast; refused while still in use
+        mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete("/admin/api/categories/" + catId).header("Authorization", auth))
+            .andExpect(status().isConflict());
+        mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete("/admin/api/products/" + productId).header("Authorization", auth))
+            .andExpect(status().isOk());
+        mvc.perform(get("/admin/api/products").header("Authorization", auth)).andExpect(jsonPath("$.length()").value(0));
+        mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete("/admin/api/categories/" + catId).header("Authorization", auth))
+            .andExpect(status().isOk());
+        mvc.perform(get("/admin/api/sync/overview").header("Authorization", auth)).andExpect(jsonPath("$[2].pendingChanges").value(1));   // product delete waits for broadcast
 
         mvc.perform(get("/sync/v1/packages").header("Authorization", "Bearer wrong")).andExpect(status().isForbidden());
         assertThat(terminalId).isNotBlank();

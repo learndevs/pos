@@ -327,3 +327,20 @@ button:disabled { opacity: 0.5; cursor: default; }
 .sync-chip.warn .dot { background: var(--danger); }
 .sync-chip:hover:not(:disabled) { background: var(--surface-2); }
 @media (max-width: 1300px) { .sync-chip .muted { display: none; } }
+
+/* this till (device code) */
+.biz-row { display: flex; align-items: center; gap: 8px; }
+.till-badge { height: 22px; padding: 0 8px; border-radius: 6px; border: 1px solid var(--border); background: var(--surface-2); color: var(--text); font-size: 12px; font-weight: 700; letter-spacing: 0.03em; }
+.till-badge .muted { font-weight: 500; letter-spacing: 0; }
+.modal.device { width: min(520px, calc(100vw - 32px)); margin-top: 6vh; }
+.device-head { display: flex; align-items: center; gap: 14px; padding: 16px 18px; border-bottom: 1px solid var(--border); }
+.device-head h3 { margin: 0; font-size: 16px; }
+.device-head .nav-btn { margin-left: auto; }
+.device-code { min-width: 54px; height: 44px; padding: 0 10px; border-radius: 10px; background: var(--primary); color: var(--primary-text); display: grid; place-items: center; font-weight: 800; font-size: 17px; letter-spacing: 0.04em; }
+.device-body { padding: 12px 18px; display: grid; gap: 10px; }
+.device-body p { margin: 0; }
+.dfield { display: grid; gap: 5px; font-size: 13px; color: var(--muted); }
+.dfield input { font: inherit; font-size: 15px; height: 42px; padding: 0 12px; border: 1px solid var(--border-strong); border-radius: 8px; background: var(--surface); color: var(--text); }
+.device-foot { display: flex; align-items: center; gap: 8px; padding: 12px 18px; border-top: 1px solid var(--border); background: var(--surface-2); }
+.device-foot .btn-primary { min-height: 42px; padding: 0 18px; }
+.ok-text { color: var(--success); font-weight: 600; }

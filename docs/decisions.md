@@ -22,6 +22,7 @@
 | D-019 | Decided | Admin panel is a separate web app + DB (`pos_admin`), cloud-ready, run locally for now. Admin is the only writer of master data; tills pull published releases (change feed with sequence numbers), apply in one transaction. |
 | D-020 | Decided | Admin and POS share module jars (entities, rules, sync-contract). Migrations use one global version sequence; folder decides the DB: db/migration (POS), db/master (both), db/admin (admin). |
 | D-021 | Decided | Config sync uses admin-built **zip packages** (chosen entities + date range or full snapshot + chosen tills), fetched and applied atomically by tills, with status reported back. Every finished transaction (completed + cancelled) is archived to admin via an outbox. |
+| D-022 | Decided | Menus (folders + buttons) are synced master data. Admin UI: categorised side nav + header feature search, list + tabbed inspector (no pop-ups), view/edit/delete on every record (delete = deactivate). Dashboard broadcasts per entity. |
 | D-006 | Open | Recipe-level stock deduction in v1 or v1.1? Default: v1.1. |
 
 ## Log
@@ -37,3 +38,4 @@
 - 2026-11-19: Server module refactor done (D-018).
 - 2026-11-19: Admin panel + sync design (D-019, D-020), phase 1 started.
 - 2026-11-19: Packages (zip) + transaction archive (D-021) replace release/feed sync. Phase 1 done and verified end to end.
+- 2026-11-19: Admin menus, dashboard per-entity broadcast, admin UI conventions (D-022).

@@ -19,7 +19,7 @@ import tools.jackson.databind.ObjectMapper;
 @Transactional
 public class ArchiveService {
 
-    public record Summary(UUID id, UUID terminalId, long txnNo, String receiptNo, String status, LocalDate businessDate,
+    public record Summary(UUID id, UUID terminalId, String deviceCode, long txnNo, String receiptNo, String status, LocalDate businessDate,
                           long totalMinor, Instant finishedAt, Instant receivedAt) {}
 
     public record Detail(Summary summary, TransactionV1 transaction) {}
@@ -40,7 +40,7 @@ public class ArchiveService {
         for (TransactionV1 t : batch.transactions()) {
             Instant finished = t.completedAt() != null ? t.completedAt() : t.cancelledAt();
             stored += archive.insertIfAbsent(t.id(), till.getId(), t.txnNo(), t.receiptNo(), t.status(), t.businessDate(),
-                t.totalMinor(), finished, json.writeValueAsString(t));
+                t.totalMinor(), finished, t.deviceCode() != null ? t.deviceCode() : till.getCode(), json.writeValueAsString(t));
         }
         return new BatchResult(batch.transactions().size(), stored);
     }
@@ -58,7 +58,7 @@ public class ArchiveService {
     }
 
     private static Summary summary(ArchivedTransaction a) {
-        return new Summary(a.getId(), a.getTerminalId(), a.getTxnNo(), a.getReceiptNo(), a.getStatus(), a.getBusinessDate(),
+        return new Summary(a.getId(), a.getTerminalId(), a.getDeviceCode(), a.getTxnNo(), a.getReceiptNo(), a.getStatus(), a.getBusinessDate(),
             a.getTotalMinor(), a.getFinishedAt(), a.getReceivedAt());
     }
 }

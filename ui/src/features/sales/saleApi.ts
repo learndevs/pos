@@ -50,6 +50,7 @@ export interface SaleLine {
 export interface Sale {
   id: string;
   txnNo: number;
+  deviceCode: string | null;
   status: "OPEN" | "COMPLETED" | "CANCELLED";
   orderType: "DINE_IN" | "TAKEAWAY";
   receiptNo: string | null;

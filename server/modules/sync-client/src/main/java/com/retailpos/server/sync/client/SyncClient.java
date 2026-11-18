@@ -31,7 +31,7 @@ import tools.jackson.databind.ObjectMapper;
 @Service
 public class SyncClient {
 
-    public record Status(boolean enabled, String adminUrl, long lastPackage, Instant lastPackageAt, Instant lastSyncAt,
+    public record Status(boolean enabled, String adminUrl, String deviceCode, String deviceName, long lastPackage, Instant lastPackageAt, Instant lastSyncAt,
                          String lastError, Instant lastErrorAt, long outboxPending) {}
 
     private static final Logger log = LoggerFactory.getLogger(SyncClient.class);
@@ -41,26 +41,53 @@ public class SyncClient {
     private final OutboxRepository outbox;
     private final ObjectMapper json;
     private final Clock clock;
-    private final String adminUrl;
-    private final String token;
-    private final RestClient http;
+    private final com.retailpos.server.settings.PosSettings settings;
+    private final String configUrl;
+    private final String configToken;
     private final ReentrantLock running = new ReentrantLock();
 
     SyncClient(SyncApplier applier, SyncStateRepository state, OutboxRepository outbox, ObjectMapper json, Clock clock,
+               com.retailpos.server.settings.PosSettings settings,
                @Value("${pos.sync.admin-url:}") String adminUrl, @Value("${pos.sync.terminal-token:}") String token) {
         this.applier = applier;
         this.state = state;
         this.outbox = outbox;
         this.json = json;
         this.clock = clock;
-        this.adminUrl = adminUrl.replaceAll("/+$", "");
-        this.token = token;
-        this.http = RestClient.builder().baseUrl(this.adminUrl.isEmpty() ? "http://localhost" : this.adminUrl)
-            .defaultHeader(HttpHeaders.AUTHORIZATION, "Bearer " + token).build();
+        this.settings = settings;
+        this.configUrl = adminUrl;
+        this.configToken = token;
+    }
+
+    /** Connection set on the till (Device panel) wins; otherwise pos.sync.* config (dev / installer). */
+    private com.retailpos.server.settings.PosSettings.SyncConnection connection() {
+        var db = settings.syncConnection();
+        return db.isSet() ? db : new com.retailpos.server.settings.PosSettings.SyncConnection(configUrl, configToken);
     }
 
     public boolean enabled() {
-        return !adminUrl.isEmpty() && !token.isEmpty();
+        return connection().isSet();
+    }
+
+    static RestClient client(String adminUrl, String token) {
+        return RestClient.builder().baseUrl(adminUrl.replaceAll("/+$", ""))
+            .defaultHeader(HttpHeaders.AUTHORIZATION, "Bearer " + token).build();
+    }
+
+    /** Asks admin who this till is (validates URL + token). */
+    public Contract.TerminalInfo whoAmI(String adminUrl, String token) {
+        return client(adminUrl, token).get().uri("/sync/v1/me").retrieve().body(Contract.TerminalInfo.class);
+    }
+
+    private void refreshIdentity(RestClient http) {
+        var me = http.get().uri("/sync/v1/me").retrieve().body(Contract.TerminalInfo.class);
+        if (me == null) return;
+        var d = settings.device();
+        if (!me.code().equals(d.code()) || !java.util.Objects.equals(me.name(), d.name()) || !me.terminalId().equals(d.terminalId())
+            || !java.util.Objects.equals(me.tillNo(), d.tillNo())) {
+            settings.saveDevice(new com.retailpos.server.settings.PosSettings.Device(me.code(), me.name(), me.terminalId(), me.tillNo()));
+            log.info("Sync: this till is {} ({})", me.code(), me.name());
+        }
     }
 
     @Scheduled(initialDelayString = "${pos.sync.initial-delay-ms:5000}", fixedDelayString = "${pos.sync.interval-ms:60000}")
@@ -72,8 +99,11 @@ public class SyncClient {
     public Status syncNow() {
         if (!enabled() || !running.tryLock()) return status();
         try {
-            pullPackages();
-            pushTransactions();
+            var c = connection();
+            RestClient http = client(c.adminUrl(), c.token());
+            refreshIdentity(http);
+            pullPackages(http);
+            pushTransactions(http);
             touch(null);
         } catch (RuntimeException e) {
             log.warn("Sync failed: {}", e.getMessage());
@@ -84,17 +114,17 @@ public class SyncClient {
         return status();
     }
 
-    private void pullPackages() {
+    private void pullPackages(RestClient http) {
         List<PackageInfo> waiting = http.get().uri("/sync/v1/packages").retrieve().body(new ParameterizedTypeReference<>() {});
         for (PackageInfo p : waiting == null ? List.<PackageInfo>of() : waiting) {
             byte[] zip = http.get().uri("/sync/v1/packages/{no}/zip", p.packageNo()).accept(MediaType.parseMediaType("application/zip"))
                 .retrieve().body(byte[].class);
             try {
                 applyZip(zip);
-                ack(p.packageNo(), PackageAck.applied());
+                ack(http, p.packageNo(), PackageAck.applied());
                 log.info("Sync: applied package #{} ({} items)", p.packageNo(), p.counts());
             } catch (RuntimeException e) {
-                ack(p.packageNo(), PackageAck.failed(message(e)));
+                ack(http, p.packageNo(), PackageAck.failed(message(e)));
                 throw new IllegalStateException("Package #" + p.packageNo() + " failed: " + message(e), e);
             }
         }
@@ -107,11 +137,11 @@ public class SyncClient {
         return read.manifest().packageNo();
     }
 
-    private void ack(int packageNo, PackageAck ack) {
+    private void ack(RestClient http, int packageNo, PackageAck ack) {
         http.post().uri("/sync/v1/packages/{no}/ack", packageNo).contentType(MediaType.APPLICATION_JSON).body(ack).retrieve().toBodilessEntity();
     }
 
-    private void pushTransactions() {
+    private void pushTransactions(RestClient http) {
         List<OutboxEntry> pending = outbox.findTop100BySentAtIsNullOrderByCreatedAtAsc();
         if (pending.isEmpty()) return;
         List<TransactionV1> txns = pending.stream().map(o -> json.readValue(o.getPayload(), TransactionV1.class)).toList();
@@ -139,7 +169,8 @@ public class SyncClient {
 
     public Status status() {
         SyncState s = state.findById("admin").orElseThrow();
-        return new Status(enabled(), adminUrl, s.getLastPackage(), s.getLastPackageAt(), s.getLastSyncAt(), s.getLastError(),
+        var d = settings.device();
+        return new Status(enabled(), connection().adminUrl(), d.code(), d.name(), s.getLastPackage(), s.getLastPackageAt(), s.getLastSyncAt(), s.getLastError(),
             s.getLastErrorAt(), outbox.countBySentAtIsNull());
     }
 

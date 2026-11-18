@@ -27,17 +27,80 @@ public class Terminals {
         this.clock = clock;
     }
 
-    public Created create(String name) {
-        if (name == null || name.isBlank()) throw com.retailpos.server.common.PosException.badRequest("Terminal name is required.");
+    public record Next(int tillNo, String code) {}
+
+    /** Suggested number + code for a new till (the create form pre-fills these). */
+    @Transactional(readOnly = true)
+    public Next next() {
+        int n = terminals.findAll().stream().mapToInt(Terminal::getTillNo).max().orElse(0) + 1;
+        return new Next(n, defaultCode(n));
+    }
+
+    /** New till. tillNo / code null = next free. The plain token is returned once. */
+    public Created create(String name, Integer tillNo, String code, String location) {
+        Next next = next();
+        int no = tillNo == null ? next.tillNo() : tillNo;
+        String c = code == null || code.isBlank() ? defaultCode(no) : code;
+        validate(null, no, name, c);
+        String token = newToken();
+        return new Created(terminals.save(new Terminal(no, name.trim(), c.trim().toUpperCase(), blankToNull(location), sha256(token), clock.instant())), token);
+    }
+
+    public Terminal update(java.util.UUID id, Integer tillNo, String name, String code, String location) {
+        Terminal t = get(id);
+        int no = tillNo == null ? t.getTillNo() : tillNo;
+        validate(id, no, name, code);
+        t.update(no, name.trim(), code.trim().toUpperCase(), blankToNull(location));
+        return t;
+    }
+
+    private void validate(java.util.UUID self, int tillNo, String name, String code) {
+        var bad = (java.util.function.Function<String, RuntimeException>) com.retailpos.server.common.PosException::badRequest;
+        if (name == null || name.isBlank()) throw bad.apply("Till name is required.");
+        if (tillNo < 1 || tillNo > 999) throw bad.apply("Till number must be 1 to 999.");
+        String c = code == null ? "" : code.trim().toUpperCase();
+        if (!c.matches("[A-Z0-9]{1,6}")) throw bad.apply("Device code: 1-6 letters or digits, e.g. T01.");
+        for (Terminal o : terminals.findAll()) {
+            if (o.getId().equals(self)) continue;
+            if (o.getTillNo() == tillNo) throw com.retailpos.server.common.PosException.conflict("Till number " + tillNo + " is already used by " + o.getName() + ".");
+            if (o.getCode().equals(c)) throw com.retailpos.server.common.PosException.conflict("Code " + c + " is already used by " + o.getName() + ".");
+        }
+    }
+
+    static String defaultCode(int tillNo) {
+        return "T" + (tillNo < 10 ? "0" + tillNo : String.valueOf(tillNo));
+    }
+
+    private static String blankToNull(String s) {
+        return s == null || s.isBlank() ? null : s.trim();
+    }
+
+    /** Issues a new token (the old one stops working) and re-enables the till. */
+    public Created resetToken(java.util.UUID id) {
+        Terminal t = get(id);
+        String token = newToken();
+        t.newToken(sha256(token));
+        return new Created(t, token);
+    }
+
+    private Terminal get(java.util.UUID id) {
+        return terminals.findById(id).orElseThrow(() -> com.retailpos.server.common.PosException.notFound("Terminal not found."));
+    }
+
+    private String newToken() {
         byte[] b = new byte[24];
         random.nextBytes(b);
-        String token = HexFormat.of().formatHex(b);
-        return new Created(terminals.save(new Terminal(name.trim(), sha256(token), clock.instant())), token);
+        return HexFormat.of().formatHex(b);
     }
 
     @Transactional(readOnly = true)
     public List<Terminal> list() {
         return terminals.findAllByOrderByNameAsc();
+    }
+
+    /** Revokes the till's token (it can no longer fetch packages or upload). */
+    public void disable(java.util.UUID id) {
+        terminals.findById(id).orElseThrow(() -> com.retailpos.server.common.PosException.notFound("Terminal not found.")).disable();
     }
 
     /** Valid active terminal for this token, and records that it was seen. */

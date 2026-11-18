@@ -38,6 +38,13 @@ public class SyncTerminalController {
         this.archive = archive;
     }
 
+    /** The till's identity (code, name) as configured in admin; tills call this when connecting and on each sync. */
+    @GetMapping("/me")
+    public com.retailpos.server.sync.contract.Contract.TerminalInfo me(@RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String auth) {
+        Terminal t = till(auth);
+        return new com.retailpos.server.sync.contract.Contract.TerminalInfo(t.getId(), t.getCode(), t.getName(), t.getLocation(), t.getTillNo());
+    }
+
     @GetMapping("/packages")
     public List<PackageInfo> waiting(@RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String auth) {
         return packages.waitingFor(till(auth));

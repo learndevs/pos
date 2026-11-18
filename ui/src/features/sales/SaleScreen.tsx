@@ -6,6 +6,7 @@ import { SaleHeader } from "./SaleHeader";
 import { TotalButton } from "./TotalButton";
 import { useAutoTransaction } from "./useAutoTransaction";
 import { DrawerSimulator } from "../../devices/DrawerSimulator";
+import { DevicePanel } from "./DevicePanel";
 
 /**
  * ┌ header: business · day · Txn # │ actions (scroll) │ theme · user · clock ┐
@@ -28,6 +29,7 @@ export function SaleScreen() {
       </div>
       <ProductSearch />
       <DrawerSimulator />
+      <DevicePanel />
     </div>
   );
 }

@@ -53,7 +53,7 @@ public class SalesService {
     public SaleView start(UUID userId) {
         return SaleView.of(openFor(userId).orElseGet(() -> {
             var session = cash.requireOpen();
-            return transactions.save(PosTransaction.startSale(transactions.nextTxnNo(), session.getId(), session.getBusinessDate(), userId, clock.instant()));
+            return transactions.save(PosTransaction.startSale(transactions.nextTxnNo(), settings.device().code(), session.getId(), session.getBusinessDate(), userId, clock.instant()));
         }));
     }
 
@@ -119,7 +119,9 @@ public class SalesService {
                 products.findById(i.getProductId()).map(p -> p.isTrackStock()).orElse(false)))
             .toList();
         events.publishEvent(new SaleCompleted(t.getId(), t.getCreatedBy(), t.getBusinessDate(), sold));
-        t.complete(t.getBusinessDate().format(RECEIPT_DATE) + "-" + String.format("%04d", no), clock.instant());
+        // device code prefix keeps receipt numbers unique across independent tills: T01-20261119-0001
+        String prefix = t.getDeviceCode() == null ? "" : t.getDeviceCode() + "-";
+        t.complete(prefix + t.getBusinessDate().format(RECEIPT_DATE) + "-" + String.format("%04d", no), clock.instant());
         events.publishEvent(new TransactionFinished(t.getId(), t.getStatus()));
     }
 

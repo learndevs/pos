@@ -22,6 +22,7 @@ Offline point-of-sale for a single-outlet restaurant on a legacy Windows PC (1 t
 | Skill | Use when |
 |---|---|
 | `pos-feature` | **Any new feature**: end-to-end workflow, code skeletons, definition of done |
+| `pos-admin` | Admin panel screens and APIs: feature registry, inspectors/tabs, view/edit/delete, broadcastable entities |
 | `pos-domain` | Touching money, sales, stock, cash sessions, business date |
 | `pos-backend` | Working in `server/`: layout, DB connection, Flyway, run and test |
 | `pos-desktop` | Working in `desktop/` or `ui/` (Electron, JVM launcher, security) |

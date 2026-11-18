@@ -13,7 +13,7 @@ public final class Contract {
     public static final int CONTRACT_VERSION = 1;
 
     /** Entity kinds in apply order (references first). */
-    public enum Entity { TAX_RATE, CATEGORY, PRODUCT }
+    public enum Entity { TAX_RATE, CATEGORY, PRODUCT, MENU_FOLDER, MENU_BUTTON }
 
     private Contract() {}
 
@@ -27,14 +27,26 @@ public final class Contract {
                             String sku, String barcode, long priceMinor, boolean kitchenPrint, boolean trackStock,
                             int sortOrder, boolean active) {}
 
+    /** A sub-folder of a menu (SALE / TENDER / ITEM); root folders exist on every till already. */
+    public record MenuFolderV1(UUID id, UUID menuId, UUID parentFolderId, String name, boolean active) {}
+
+    /** One slot of a 4 x 3 page; inactive = removed (frees the slot). */
+    public record MenuButtonV1(UUID id, UUID folderId, int page, int gridRow, int gridCol, String label, String color,
+                               String actionType, UUID productId, UUID targetFolderId, String tenderMethod, Long amountMinor,
+                               String functionCode, UUID targetMenuId, boolean active) {}
+
     /** manifest.json inside a package zip. sha256: file name -> SHA-256 hex of that file. */
     public record Manifest(int contractVersion, int packageNo, Instant createdAt, String scope, LocalDate dateFrom,
                            LocalDate dateTo, List<Entity> entities, Map<String, Integer> counts,
                            Map<String, String> sha256, String note) {}
 
     /** The data of a package (one list per entity file). */
-    public record PackageContent(List<TaxRateV1> taxRates, List<CategoryV1> categories, List<ProductV1> products) {
-        public int size() { return taxRates.size() + categories.size() + products.size(); }
+    public record PackageContent(List<TaxRateV1> taxRates, List<CategoryV1> categories, List<ProductV1> products,
+                                 List<MenuFolderV1> menuFolders, List<MenuButtonV1> menuButtons) {
+        public PackageContent(List<TaxRateV1> taxRates, List<CategoryV1> categories, List<ProductV1> products) {
+            this(taxRates, categories, products, List.of(), List.of());
+        }
+        public int size() { return taxRates.size() + categories.size() + products.size() + menuFolders.size() + menuButtons.size(); }
     }
 
     /** GET /sync/v1/packages: what is waiting for this till, oldest first. */
@@ -53,7 +65,10 @@ public final class Contract {
                                     BigDecimal quantity, Long unitPriceMinor, Long discountMinor, Integer discountPercent,
                                     Long taxMinor, long amountMinor, String tenderMethod, Long tenderedMinor, Long changeMinor) {}
 
-    public record TransactionV1(UUID id, long txnNo, String receiptNo, String type, String status, String orderType,
+    /** GET /sync/v1/me: who this till is (assigned in admin). */
+    public record TerminalInfo(UUID terminalId, String code, String name, String location, Integer tillNo) {}
+
+    public record TransactionV1(UUID id, String deviceCode, long txnNo, String receiptNo, String type, String status, String orderType,
                                 LocalDate businessDate, Instant createdAt, Instant completedAt, Instant cancelledAt,
                                 String reason, UUID cashierId, String cashierName, long subtotalMinor, long taxMinor,
                                 long totalMinor, long paidMinor, long changeMinor, List<TransactionLineV1> lines) {}

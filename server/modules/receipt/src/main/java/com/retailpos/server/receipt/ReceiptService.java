@@ -135,8 +135,11 @@ public class ReceiptService {
         totals.put("change", money.format(t.changeMinor()));
         totals.put("hasChange", t.changeMinor() > 0);
 
+        Map<String, Object> device = new LinkedHashMap<>();
+        device.put("code", t.getDeviceCode() == null ? "" : t.getDeviceCode());
+        device.put("name", json("device").getOrDefault("name", ""));
         return Map.of("business", business, "receipt", json("receipt"), "sale", sale, "lines", lines,
-            "tenders", tenders, "totals", totals);
+            "tenders", tenders, "totals", totals, "device", device);
     }
 
     private Map<String, Object> sampleModel() {
@@ -145,6 +148,7 @@ public class ReceiptService {
         return Map.of(
             "business", business,
             "receipt", json("receipt"),
+            "device", Map.of("code", "T01", "name", "Till 1"),
             "sale", Map.of("receiptNo", "20260101-0001", "txnNo", 1001, "date", "2026-01-01", "time", "12:30",
                 "businessDate", "2026-01-01", "orderType", "Takeaway", "cashier", "Sample"),
             "lines", List.of(

@@ -97,15 +97,39 @@ public final class AdminCatalog {
             return v;
         }
 
-        @Transactional(readOnly = true)
-        List<TaxRateV1> taxRates() { return taxRates.findAllByOrderByNameAsc().stream().map(CatalogMapper::toV1).toList(); }
+        /** "Delete" = deactivate + broadcast (history keeps referring to it). Refused while still in use. */
+        void deleteTaxRate(UUID id, UUID by) {
+            TaxRate t = taxRates.findById(id).orElseThrow(() -> PosException.notFound("Tax rate not found."));
+            long used = products.findAll().stream().filter(p -> p.isActive() && p.getTaxRate() != null && p.getTaxRate().getId().equals(id)).count();
+            if (used > 0) throw PosException.conflict("Tax rate is used by " + used + " active product(s). Change them first.");
+            t.update(t.getName(), t.getRateBp(), t.isInclusive(), false);
+            changeLog.record(Contract.Entity.TAX_RATE, id, CatalogMapper.toV1(t), by);
+        }
+
+        void deleteCategory(UUID id, UUID by) {
+            Category c = categories.findById(id).orElseThrow(() -> PosException.notFound("Category not found."));
+            long used = products.findAll().stream().filter(p -> p.isActive() && p.getCategory().getId().equals(id)).count();
+            if (used > 0) throw PosException.conflict("Category has " + used + " active product(s). Move or delete them first.");
+            c.update(c.getName(), c.getSortOrder(), false);
+            changeLog.record(Contract.Entity.CATEGORY, id, CatalogMapper.toV1(c), by);
+        }
+
+        void deleteProduct(UUID id, UUID by) {
+            Product p = products.findById(id).orElseThrow(() -> PosException.notFound("Product not found."));
+            p.update(new Product.Data(p.getCategory(), p.getTaxRate(), p.getName(), p.getItemClass(), p.getNonMerchType(), p.getSku(),
+                p.getBarcode(), p.getPriceMinor(), p.isKitchenPrint(), p.isTrackStock(), p.getSortOrder(), false), clock.instant());
+            changeLog.record(Contract.Entity.PRODUCT, id, CatalogMapper.toV1(p), by);
+        }
 
         @Transactional(readOnly = true)
-        List<CategoryV1> categories() { return categories.findAllByOrderBySortOrderAscNameAsc().stream().map(CatalogMapper::toV1).toList(); }
+        List<TaxRateV1> taxRates() { return taxRates.findAllByOrderByNameAsc().stream().filter(TaxRate::isActive).map(CatalogMapper::toV1).toList(); }
+
+        @Transactional(readOnly = true)
+        List<CategoryV1> categories() { return categories.findAllByOrderBySortOrderAscNameAsc().stream().filter(Category::isActive).map(CatalogMapper::toV1).toList(); }
 
         @Transactional(readOnly = true)
         List<ProductV1> products() {
-            return products.findAll().stream().sorted(Comparator.comparing(Product::getName, String.CASE_INSENSITIVE_ORDER))
+            return products.findAll().stream().filter(Product::isActive).sorted(Comparator.comparing(Product::getName, String.CASE_INSENSITIVE_ORDER))
                 .map(CatalogMapper::toV1).toList();
         }
     }
@@ -118,6 +142,9 @@ public final class AdminCatalog {
 
         @GetMapping("/tax-rates") List<TaxRateV1> taxRates() { return catalog.taxRates(); }
         @PostMapping("/tax-rates") TaxRateV1 createTax(@Valid @RequestBody TaxRateIn in, @AuthenticationPrincipal AdminAuth.Principal me) { return catalog.saveTaxRate(null, in, me.id()); }
+        @org.springframework.web.bind.annotation.DeleteMapping("/tax-rates/{id}") void deleteTax(@PathVariable UUID id, @AuthenticationPrincipal AdminAuth.Principal me) { catalog.deleteTaxRate(id, me.id()); }
+        @org.springframework.web.bind.annotation.DeleteMapping("/categories/{id}") void deleteCategory(@PathVariable UUID id, @AuthenticationPrincipal AdminAuth.Principal me) { catalog.deleteCategory(id, me.id()); }
+        @org.springframework.web.bind.annotation.DeleteMapping("/products/{id}") void deleteProduct(@PathVariable UUID id, @AuthenticationPrincipal AdminAuth.Principal me) { catalog.deleteProduct(id, me.id()); }
         @PutMapping("/tax-rates/{id}") TaxRateV1 updateTax(@PathVariable UUID id, @Valid @RequestBody TaxRateIn in, @AuthenticationPrincipal AdminAuth.Principal me) { return catalog.saveTaxRate(id, in, me.id()); }
 
         @GetMapping("/categories") List<CategoryV1> categories() { return catalog.categories(); }

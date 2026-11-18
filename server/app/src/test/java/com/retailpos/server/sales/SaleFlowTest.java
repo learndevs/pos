@@ -48,8 +48,8 @@ class SaleFlowTest {
         sale = sales.tender(sale.id(), "CASH", 5000L);
         assertThat(sale.status()).isEqualTo("COMPLETED");
         assertThat(sale.changeMinor()).isEqualTo(2800);
-        assertThat(sale.receiptNo()).isEqualTo("20261119-0001");
-        assertThat(receipts.render(sale.id())).contains("20261119-0001", "Burger", "$22.00", "$28.00");   // total, change
+        assertThat(sale.receiptNo()).isEqualTo("T01-20261119-0001");
+        assertThat(receipts.render(sale.id())).contains("T01-20261119-0001", "Burger", "$22.00", "$28.00");   // total, change
 
         em.flush();
         assertThat(jdbc.queryForObject("SELECT quantity FROM stock_on_hand WHERE stock_item_id = ?", BigDecimal.class, bun))

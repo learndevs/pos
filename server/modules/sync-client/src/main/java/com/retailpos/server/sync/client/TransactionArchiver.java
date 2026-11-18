@@ -52,7 +52,7 @@ public class TransactionArchiver {
             default -> throw new IllegalStateException("Unknown basket item " + i.getClass());
         }).toList();
         String cashier = users.findById(t.getCreatedBy()).map(u -> u.getDisplayName()).orElse(null);
-        return new TransactionV1(t.getId(), t.getTxnNo(), t.getReceiptNo(), t.getType(), t.getStatus(), t.getOrderType(),
+        return new TransactionV1(t.getId(), t.getDeviceCode(), t.getTxnNo(), t.getReceiptNo(), t.getType(), t.getStatus(), t.getOrderType(),
             t.getBusinessDate(), t.getCreatedAt(), t.getCompletedAt(), t.getCancelledAt(), t.getReason(), t.getCreatedBy(),
             cashier, t.getSubtotalMinor(), t.getTaxMinor(), t.getTotalMinor(), t.paidMinor(), t.changeMinor(), lines);
     }

@@ -57,6 +57,26 @@ class PackageSyncTest {
     }
 
     @Test
+    void appliesMenuFolderAndSwapsButtonsInOnePackage() {
+        UUID saleRoot = UUID.fromString("00000000-0000-7000-8000-0000000b0001");
+        UUID saleMenu = UUID.fromString("00000000-0000-7000-8000-0000000a0001");
+        UUID qtyButton = UUID.fromString("00000000-0000-7000-8000-0000000c0003");     // Dine in / Takeaway, seeded
+        UUID drawerButton = UUID.fromString("00000000-0000-7000-8000-0000000c0005");  // Open drawer, seeded
+        var a = jdbc.queryForMap("SELECT grid_row, grid_col FROM menu_button WHERE id = ?", qtyButton);
+        var b = jdbc.queryForMap("SELECT grid_row, grid_col FROM menu_button WHERE id = ?", drawerButton);
+        UUID folder = UUID.randomUUID();
+        var content = new PackageContent(List.of(), List.of(), List.of(),
+            List.of(new Contract.MenuFolderV1(folder, saleMenu, saleRoot, "Specials", true)),
+            List.of(   // swap the two seeded buttons' slots: only works because the applier takes them out of the grid first
+                new Contract.MenuButtonV1(qtyButton, saleRoot, 0, (int) b.get("grid_row"), (int) b.get("grid_col"), "Dine in / Takeaway", null, "FUNCTION", null, null, null, null, "TAKEAWAY_TOGGLE", null, true),
+                new Contract.MenuButtonV1(drawerButton, saleRoot, 0, (int) a.get("grid_row"), (int) a.get("grid_col"), "Open drawer", null, "FUNCTION", null, null, null, null, "OPEN_DRAWER", null, true)));
+        sync.applyZip(zip(4, content));
+        em.flush();
+        assertThat(jdbc.queryForObject("SELECT name FROM menu_folder WHERE id = ?", String.class, folder)).isEqualTo("Specials");
+        assertThat(jdbc.queryForMap("SELECT grid_row, grid_col FROM menu_button WHERE id = ?", qtyButton)).isEqualTo(b);
+    }
+
+    @Test
     void rejectsTamperedPackage() {
         byte[] good = zip(3, new PackageContent(List.of(), List.of(new CategoryV1(UUID.randomUUID(), "X", 0, true)), List.of()));
         byte[] tampered = rewrite(good, "categories.json", "[{\"id\":\"00000000-0000-7000-8000-000000000999\",\"name\":\"Y\",\"sortOrder\":0,\"active\":true}]");
